@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Plus, ChevronRight, BookOpen } from 'lucide-react'
-import type { Formation, CourtType, FormationCategory, PlayerPos } from '../types'
+import type { Formation, CourtType, FormationCategory, PlayerPos, TeamWithRole } from '../types'
 import { FormationDiagram } from '../components/FormationDiagram'
 import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabase'
-import type { useTeams } from '../hooks/useTeams'
 import { useAuth } from '../contexts/AuthContext'
 
 // ===== プリセットフォーメーション =====
@@ -170,7 +169,7 @@ interface Props {
   onAdd: (f: Omit<Formation, 'id' | 'createdAt'>) => Formation
   onUpdate: (id: string, updates: Partial<Formation>) => void
   onDelete: (id: string) => void
-  teams: ReturnType<typeof useTeams>
+  teams: { myTeams: TeamWithRole[] }
 }
 
 // ===== Preset Detail View =====
