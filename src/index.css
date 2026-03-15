@@ -1,0 +1,282 @@
+@import "tailwindcss";
+
+/* ===== SPINNING BASKETBALL CURSOR ===== */
+html, body { cursor: none; }
+button:not(:disabled), a, [role="button"], label { cursor: none; }
+input, textarea, select { cursor: none; }
+button:disabled { cursor: not-allowed; }
+input[type="range"] { cursor: none; }
+input[type="date"]  { cursor: none; }
+
+@keyframes basketballSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ===== BASE ===== */
+* { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic UI', system-ui, sans-serif;
+  background-color: #E8E0D0;
+  color: #1E1A14;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-klee { font-family: 'Klee One', cursive; }
+
+/* ===== MOTTO INPUT (dark background textarea) ===== */
+.motto-input::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+  font-style: normal;
+}
+.motto-input:focus { outline: none; }
+
+/* ===== NOTEBOOK BACKGROUND — ruled lines on scrollable area ===== */
+.nb-bg {
+  background-color: #E8E0D0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 27px,
+    rgba(148, 122, 90, 0.28) 27px,
+    rgba(148, 122, 90, 0.28) 28px
+  );
+  background-size: 100% 28px;
+}
+
+/* ===== CARDS — sticky note (付箋) style ===== */
+.nb-card {
+  background: #FFFCE8;
+  border-radius: 3px 3px 4px 4px;
+  border: none;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.10),
+    0 3px 8px rgba(0,0,0,0.12),
+    0 6px 16px rgba(0,0,0,0.07);
+  padding: 16px;
+  position: relative;
+}
+
+/* sticky note top adhesive strip */
+.nb-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: rgba(200, 165, 60, 0.22);
+  border-radius: 3px 3px 0 0;
+}
+
+.nb-card-plain {
+  background: #FFFCE8;
+  border-radius: 3px 3px 4px 4px;
+  border: none;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.08),
+    0 2px 6px rgba(0,0,0,0.10),
+    0 4px 12px rgba(0,0,0,0.06);
+  padding: 16px;
+  position: relative;
+}
+
+.nb-card-plain::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: rgba(200, 165, 60, 0.18);
+  border-radius: 3px 3px 0 0;
+}
+
+.nb-card-coach {
+  background: #EEF4FF;
+  border-radius: 3px 3px 4px 4px;
+  border: none;
+  border-left: 3px solid #1E3A5F;
+  box-shadow:
+    0 1px 2px rgba(30,58,95,0.10),
+    0 3px 8px rgba(30,58,95,0.10);
+  padding: 16px;
+  position: relative;
+}
+
+.nb-card-coach::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 3px;
+  right: 0;
+  height: 5px;
+  background: rgba(30, 58, 95, 0.12);
+  border-radius: 0 3px 0 0;
+}
+
+/* ===== INPUTS — bottom border (notebook feel) ===== */
+.nb-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid rgba(148,122,90,0.5);
+  padding: 8px 2px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  color: #1E1A14;
+  outline: none;
+  transition: border-color 0.18s;
+  border-radius: 0;
+}
+.nb-input::placeholder { color: #C3AF94; }
+.nb-input:focus { border-bottom-color: #E07B2A; }
+
+.nb-textarea {
+  width: 100%;
+  background: rgba(200,165,60,0.06);
+  border: 1px solid rgba(148,122,90,0.35);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  color: #1E1A14;
+  outline: none;
+  resize: none;
+  min-height: 80px;
+  line-height: 1.75;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.nb-textarea::placeholder { color: #C3AF94; }
+.nb-textarea:focus {
+  border-color: #E07B2A;
+  box-shadow: 0 0 0 3px rgba(224,123,42,0.1);
+}
+
+.nb-input-coach  { border-bottom-color: rgba(30,58,95,0.3); }
+.nb-input-coach:focus  { border-bottom-color: #1E3A5F; }
+.nb-textarea-coach { background: rgba(30,58,95,0.04); border-color: rgba(30,58,95,0.2); }
+.nb-textarea-coach:focus { border-color: #1E3A5F; }
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+  background: linear-gradient(135deg, #E07B2A 0%, #C4520D 100%);
+  color: white;
+  font-weight: 700;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: none;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+  width: 100%;
+  box-shadow: 0 4px 14px rgba(224,123,42,0.35);
+  letter-spacing: 0.01em;
+}
+.btn-primary:hover  { opacity: 0.93; box-shadow: 0 6px 18px rgba(224,123,42,0.4); }
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.4; box-shadow: none; }
+
+.btn-secondary {
+  background: rgba(200,165,60,0.12);
+  color: #7A6E5F;
+  font-weight: 600;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,122,90,0.3);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  transition: opacity 0.15s, transform 0.12s;
+  width: 100%;
+}
+.btn-secondary:hover  { opacity: 0.85; }
+.btn-secondary:active { transform: scale(0.97); }
+
+.btn-navy {
+  background: linear-gradient(135deg, #1E3A5F 0%, #142B4A 100%);
+  color: white;
+  font-weight: 700;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: none;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  transition: opacity 0.15s, transform 0.12s;
+  width: 100%;
+  box-shadow: 0 4px 14px rgba(30,58,95,0.28);
+}
+.btn-navy:hover  { opacity: 0.92; }
+.btn-navy:active { transform: scale(0.97); }
+
+/* ===== TAG CHIPS ===== */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background: rgba(200,165,60,0.12);
+  color: #7A6E5F;
+  border: 1px solid rgba(148,122,90,0.3);
+  transition: all 0.15s;
+}
+.tag-chip.active {
+  background: #E07B2A;
+  color: white;
+  border-color: #E07B2A;
+}
+
+/* ===== PAGE ANIMATIONS ===== */
+.page-enter {
+  animation: pageEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(148,122,90,0.4); border-radius: 2px; }
+
+/* ===== SAFE AREA ===== */
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* ===== NUMBER INPUT ===== */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* ===== RANGE SLIDER ===== */
+input[type="range"] { accent-color: #E07B2A; }
+
+/* ===== STEP INDICATOR ===== */
+.step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+.step-dot.active {
+  background: linear-gradient(135deg, #E07B2A, #C4520D);
+  color: white;
+  box-shadow: 0 2px 10px rgba(224,123,42,0.4);
+}
+.step-dot.done {
+  background: #2E7D52;
+  color: white;
+}
+.step-dot.todo {
+  background: rgba(200,165,60,0.15);
+  color: #A89F92;
+  border: 1px solid rgba(148,122,90,0.3);
+}
