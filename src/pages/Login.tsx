@@ -60,7 +60,7 @@ export function LoginPage() {
           fontFamily: "'Klee One', cursive", fontWeight: 700,
           marginBottom: '8px',
         }}>
-          {lang === 'ja' ? 'バスケノート' : 'BaskeNote'}
+          {lang === 'ja' ? 'バスケットボールノート' : 'Basketball Note'}
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', marginBottom: '40px', lineHeight: 1.6 }}>
           {lang === 'ja' ? '練習・試合・成長を記録するノート' : 'Track your practice, games & growth'}

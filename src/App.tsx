@@ -12,6 +12,7 @@ import { FormationsPage } from './pages/FormationsPage'
 import { SettingsPage }   from './pages/Settings'
 import { Onboarding }     from './pages/Onboarding'
 import { LoginPage }      from './pages/Login'
+import { GuestPreview }  from './pages/GuestPreview'
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext'
 import { AuthProvider, useAuth }         from './contexts/AuthContext'
 import { getProfile } from './lib/profile'
@@ -31,7 +32,7 @@ const NAV_IDS: { id: Page; key: string; Icon: React.ElementType }[] = [
 function AppInner() {
   const [page, setPage] = useState<Page>('home')
   const [onboardingDone, setOnboardingDone] = useState(() => getProfile().onboardingDone)
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, signInWithGoogle } = useAuth()
   const store = useSupabaseStore(user?.id ?? '')
   const { lang, setLang, t } = useLanguage()
 
@@ -50,13 +51,9 @@ function AppInner() {
     )
   }
 
-  // ===== 未ログイン =====
+  // ===== 未ログイン → ゲストプレビュー =====
   if (!user) {
-    return (
-      <LanguageProvider>
-        <LoginPage />
-      </LanguageProvider>
-    )
+    return <GuestPreview onSignIn={signInWithGoogle} />
   }
 
   // ===== オンボーディング未完了 =====
