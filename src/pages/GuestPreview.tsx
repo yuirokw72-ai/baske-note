@@ -15,80 +15,158 @@ const d = (offset: number) => {
 
 const NOW = new Date().toISOString()
 
-const SAMPLE_LOGS: PracticeLog[] = [
-  {
-    id: 's1', date: d(1), practiceType: 'team', duration: 120,
-    todayGoal: '3ポイントシュートのフォームを安定させる',
-    condition: 4, motivation: 5,
-    menus: ['シュート練習', 'フリースロー', '5on5'],
-    didWell: 'キャッチ&シュートの精度が上がった',
-    struggled: 'ドリブルからの3ポイントはまだ不安定',
-    goalAchievement: 'partial',
-    achievementReason: 'スタンディングは安定したが動きながらはまだ',
-    todayLearning: 'リリースポイントを高くすると精度が上がる',
-    nextChallenge: '動きながらのシュートを毎日50本練習する',
-    selfRating: 4, formations: [], createdAt: NOW,
-  },
-  {
-    id: 's2', date: d(3), practiceType: 'solo', duration: 90,
-    todayGoal: '左手のボールハンドリングを改善する',
-    condition: 3, motivation: 4,
-    menus: ['ハンドリング', 'ドリブル練習', 'レイアップ'],
-    didWell: 'クロスオーバーのスピードが上がった',
-    struggled: '左手だけの長時間ドリブルがきつい',
-    goalAchievement: 'achieved',
-    achievementReason: '集中して1時間ひたすらハンドリング練習をした',
-    todayLearning: '継続が大事。毎日少しずつが積み重なる',
-    nextChallenge: '左手逆レイアップをゲームで1回使う',
-    selfRating: 5, formations: [], createdAt: NOW,
-  },
-  {
-    id: 's3', date: d(7), practiceType: 'team', duration: 150,
-    todayGoal: 'チームのピック&ロールの連携を高める',
-    condition: 5, motivation: 5,
-    menus: ['フォーメーション', '3on3', '5on5'],
-    didWell: 'PGとのコンビが息が合ってきた',
-    struggled: 'ローテーションのタイミングがずれる',
-    goalAchievement: 'partial',
-    achievementReason: '前半は良かったが後半疲れてフットワークが雑になった',
-    todayLearning: '疲れた時こそ基本を大切に',
-    nextChallenge: 'スタミナトレーニングを週3回追加する',
-    selfRating: 3, formations: [], createdAt: NOW,
-  },
-]
+function getSampleLogs(lang: string): PracticeLog[] {
+  if (lang === 'en') return [
+    {
+      id: 's1', date: d(1), practiceType: 'team', duration: 120,
+      todayGoal: 'Stabilize 3-point shooting form',
+      condition: 4, motivation: 5,
+      menus: ['Shooting drills', 'Free throws', '5-on-5'],
+      didWell: 'Improved accuracy on catch-and-shoot',
+      struggled: '3-pointers off the dribble still inconsistent',
+      goalAchievement: 'partial',
+      achievementReason: 'Standing shots are solid but moving shots need work',
+      todayLearning: 'A higher release point improves accuracy',
+      nextChallenge: 'Practice 50 moving shots every day',
+      selfRating: 4, formations: [], createdAt: NOW,
+    },
+    {
+      id: 's2', date: d(3), practiceType: 'solo', duration: 90,
+      todayGoal: 'Improve left-hand ball handling',
+      condition: 3, motivation: 4,
+      menus: ['Ball handling', 'Dribble drills', 'Layups'],
+      didWell: 'Crossover speed improved',
+      struggled: 'Sustained left-hand dribbling is tough',
+      goalAchievement: 'achieved',
+      achievementReason: 'Focused 1 hour of solid handling drills',
+      todayLearning: 'Consistency matters — small daily gains add up',
+      nextChallenge: 'Use a left-hand reverse layup in a game',
+      selfRating: 5, formations: [], createdAt: NOW,
+    },
+    {
+      id: 's3', date: d(7), practiceType: 'team', duration: 150,
+      todayGoal: 'Improve team pick-and-roll coordination',
+      condition: 5, motivation: 5,
+      menus: ['Formations', '3-on-3', '5-on-5'],
+      didWell: 'Great chemistry with the PG',
+      struggled: 'Rotation timing was off',
+      goalAchievement: 'partial',
+      achievementReason: 'First half was great, second half footwork got sloppy when tired',
+      todayLearning: 'Stick to the basics, especially when fatigued',
+      nextChallenge: 'Add stamina training 3 times a week',
+      selfRating: 3, formations: [], createdAt: NOW,
+    },
+  ]
+  return [
+    {
+      id: 's1', date: d(1), practiceType: 'team', duration: 120,
+      todayGoal: '3ポイントシュートのフォームを安定させる',
+      condition: 4, motivation: 5,
+      menus: ['シュート練習', 'フリースロー', '5on5'],
+      didWell: 'キャッチ&シュートの精度が上がった',
+      struggled: 'ドリブルからの3ポイントはまだ不安定',
+      goalAchievement: 'partial',
+      achievementReason: 'スタンディングは安定したが動きながらはまだ',
+      todayLearning: 'リリースポイントを高くすると精度が上がる',
+      nextChallenge: '動きながらのシュートを毎日50本練習する',
+      selfRating: 4, formations: [], createdAt: NOW,
+    },
+    {
+      id: 's2', date: d(3), practiceType: 'solo', duration: 90,
+      todayGoal: '左手のボールハンドリングを改善する',
+      condition: 3, motivation: 4,
+      menus: ['ハンドリング', 'ドリブル練習', 'レイアップ'],
+      didWell: 'クロスオーバーのスピードが上がった',
+      struggled: '左手だけの長時間ドリブルがきつい',
+      goalAchievement: 'achieved',
+      achievementReason: '集中して1時間ひたすらハンドリング練習をした',
+      todayLearning: '継続が大事。毎日少しずつが積み重なる',
+      nextChallenge: '左手逆レイアップをゲームで1回使う',
+      selfRating: 5, formations: [], createdAt: NOW,
+    },
+    {
+      id: 's3', date: d(7), practiceType: 'team', duration: 150,
+      todayGoal: 'チームのピック&ロールの連携を高める',
+      condition: 5, motivation: 5,
+      menus: ['フォーメーション', '3on3', '5on5'],
+      didWell: 'PGとのコンビが息が合ってきた',
+      struggled: 'ローテーションのタイミングがずれる',
+      goalAchievement: 'partial',
+      achievementReason: '前半は良かったが後半疲れてフットワークが雑になった',
+      todayLearning: '疲れた時こそ基本を大切に',
+      nextChallenge: 'スタミナトレーニングを週3回追加する',
+      selfRating: 3, formations: [], createdAt: NOW,
+    },
+  ]
+}
 
-const SAMPLE_GAMES: GameRecord[] = [
-  {
-    id: 'g1', date: d(5), opponent: '○○高校', venue: '市民体育館',
-    result: 'win', myScore: 68, opponentScore: 54,
-    points: 18, rebounds: 7, assists: 4, steals: 2, turnovers: 1, blocks: 1,
-    fgMade: 7, fgAttempts: 14, minutesPlayed: 32,
-    goodPlays: 'ピック&ロールからの得点が3本決まった。リバウンドも積極的に取れた',
-    badPlays: 'ターンオーバーが前半に集中した',
-    teamAnalysis: '速攻は効果的だった。セットオフェンスの精度を上げたい',
-    nextGameFocus: '左側のドライブを積極的に仕掛ける',
-    mentalReflection: '序盤は緊張したが、最初の得点で落ち着けた',
-    selfRating: 4, quarterNotes: [], createdAt: NOW,
-  },
-  {
-    id: 'g2', date: d(12), opponent: '△△クラブ', venue: '第二体育館',
-    result: 'lose', myScore: 55, opponentScore: 62,
-    points: 12, rebounds: 5, assists: 3, steals: 1, turnovers: 3, blocks: 0,
-    fgMade: 5, fgAttempts: 13, minutesPlayed: 28,
-    goodPlays: 'ディフェンスの強度は高く保てた',
-    badPlays: 'オフェンスリバウンドを取られ続けた。3Qに精神的に焦ってしまった',
-    teamAnalysis: 'ゾーンディフェンスへの攻め方が課題',
-    nextGameFocus: 'ゾーン攻略の練習を積む',
-    mentalReflection: '負けている時の立て直し方を学んだ',
-    selfRating: 3, quarterNotes: [], createdAt: NOW,
-  },
-]
+function getSampleGames(lang: string): GameRecord[] {
+  if (lang === 'en') return [
+    {
+      id: 'g1', date: d(5), opponent: 'Riverside High', venue: 'City Gym',
+      result: 'win', myScore: 68, opponentScore: 54,
+      points: 18, rebounds: 7, assists: 4, steals: 2, turnovers: 1, blocks: 1,
+      fgMade: 7, fgAttempts: 14, minutesPlayed: 32,
+      goodPlays: '3 pick-and-roll scores. Active on the boards',
+      badPlays: 'Turnovers concentrated in the first half',
+      teamAnalysis: 'Fast break was effective. Need to polish set offense',
+      nextGameFocus: 'Attack the left side aggressively',
+      mentalReflection: 'Nervous early, but settled after the first score',
+      selfRating: 4, quarterNotes: [], createdAt: NOW,
+    },
+    {
+      id: 'g2', date: d(12), opponent: 'Westside Club', venue: 'Annex Gym',
+      result: 'lose', myScore: 55, opponentScore: 62,
+      points: 12, rebounds: 5, assists: 3, steals: 1, turnovers: 3, blocks: 0,
+      fgMade: 5, fgAttempts: 13, minutesPlayed: 28,
+      goodPlays: 'Maintained defensive intensity',
+      badPlays: 'Kept giving up offensive rebounds. Panicked in Q3',
+      teamAnalysis: 'Need better strategy against zone defense',
+      nextGameFocus: 'Practice zone offense more',
+      mentalReflection: 'Learned how to reset mentally when losing',
+      selfRating: 3, quarterNotes: [], createdAt: NOW,
+    },
+  ]
+  return [
+    {
+      id: 'g1', date: d(5), opponent: '○○高校', venue: '市民体育館',
+      result: 'win', myScore: 68, opponentScore: 54,
+      points: 18, rebounds: 7, assists: 4, steals: 2, turnovers: 1, blocks: 1,
+      fgMade: 7, fgAttempts: 14, minutesPlayed: 32,
+      goodPlays: 'ピック&ロールからの得点が3本決まった。リバウンドも積極的に取れた',
+      badPlays: 'ターンオーバーが前半に集中した',
+      teamAnalysis: '速攻は効果的だった。セットオフェンスの精度を上げたい',
+      nextGameFocus: '左側のドライブを積極的に仕掛ける',
+      mentalReflection: '序盤は緊張したが、最初の得点で落ち着けた',
+      selfRating: 4, quarterNotes: [], createdAt: NOW,
+    },
+    {
+      id: 'g2', date: d(12), opponent: '△△クラブ', venue: '第二体育館',
+      result: 'lose', myScore: 55, opponentScore: 62,
+      points: 12, rebounds: 5, assists: 3, steals: 1, turnovers: 3, blocks: 0,
+      fgMade: 5, fgAttempts: 13, minutesPlayed: 28,
+      goodPlays: 'ディフェンスの強度は高く保てた',
+      badPlays: 'オフェンスリバウンドを取られ続けた。3Qに精神的に焦ってしまった',
+      teamAnalysis: 'ゾーンディフェンスへの攻め方が課題',
+      nextGameFocus: 'ゾーン攻略の練習を積む',
+      mentalReflection: '負けている時の立て直し方を学んだ',
+      selfRating: 3, quarterNotes: [], createdAt: NOW,
+    },
+  ]
+}
 
-const SAMPLE_GOALS: Goal[] = [
-  { id: 'goal1', type: 'short', category: 'skill', title: '3ポイント成功率35%以上', detail: 'キャッチ&シュートを中心に練習', deadline: d(-30), progress: 60, isCompleted: false, createdAt: NOW },
-  { id: 'goal2', type: 'long', category: 'physical', title: 'スタミナ強化 - 40分フル出場', detail: '週3回のランニングと体幹トレを継続', deadline: d(-90), progress: 40, isCompleted: false, createdAt: NOW },
-  { id: 'goal3', type: 'short', category: 'skill', title: '左手レイアップをゲームで使う', detail: '自主練で毎日50本練習', deadline: d(-7), progress: 100, isCompleted: true, createdAt: NOW },
-]
+function getSampleGoals(lang: string): Goal[] {
+  if (lang === 'en') return [
+    { id: 'goal1', type: 'short', category: 'skill', title: '3-point shooting rate above 35%', detail: 'Focus on catch-and-shoot practice', deadline: d(-30), progress: 60, isCompleted: false, createdAt: NOW },
+    { id: 'goal2', type: 'long', category: 'physical', title: 'Build stamina for full 40 min games', detail: 'Run 3x/week + core training', deadline: d(-90), progress: 40, isCompleted: false, createdAt: NOW },
+    { id: 'goal3', type: 'short', category: 'skill', title: 'Use left-hand layup in a game', detail: 'Practice 50 reps daily', deadline: d(-7), progress: 100, isCompleted: true, createdAt: NOW },
+  ]
+  return [
+    { id: 'goal1', type: 'short', category: 'skill', title: '3ポイント成功率35%以上', detail: 'キャッチ&シュートを中心に練習', deadline: d(-30), progress: 60, isCompleted: false, createdAt: NOW },
+    { id: 'goal2', type: 'long', category: 'physical', title: 'スタミナ強化 - 40分フル出場', detail: '週3回のランニングと体幹トレを継続', deadline: d(-90), progress: 40, isCompleted: false, createdAt: NOW },
+    { id: 'goal3', type: 'short', category: 'skill', title: '左手レイアップをゲームで使う', detail: '自主練で毎日50本練習', deadline: d(-7), progress: 100, isCompleted: true, createdAt: NOW },
+  ]
+}
 
 type Page = 'home' | 'calendar' | 'practice' | 'game' | 'goals' | 'skills' | 'formations'
 
@@ -100,6 +178,10 @@ export function GuestPreview({ onSignIn }: Props) {
   const { lang, setLang, t } = useLanguage()
   const [page, setPage] = useState<Page>('home')
   const [showSignUpModal, setShowSignUpModal] = useState(false)
+
+  const sampleLogs = getSampleLogs(lang)
+  const sampleGames = getSampleGames(lang)
+  const sampleGoals = getSampleGoals(lang)
 
   const NAV_IDS: { id: Page; key: string; Icon: React.ElementType }[] = [
     { id: 'home',       key: 'nav.home',       Icon: Home },
@@ -115,10 +197,10 @@ export function GuestPreview({ onSignIn }: Props) {
     if (page === 'home') {
       return (
         <Dashboard
-          practiceLogs={SAMPLE_LOGS}
-          gameRecords={SAMPLE_GAMES}
-          goals={SAMPLE_GOALS}
-          latestNextChallenge={SAMPLE_LOGS[0].nextChallenge}
+          practiceLogs={sampleLogs}
+          gameRecords={sampleGames}
+          goals={sampleGoals}
+          latestNextChallenge={sampleLogs[0].nextChallenge}
           onNavigate={(p) => {
             if (p === 'practice' || p === 'game' || p === 'goals' || p === 'skills' || p === 'formations') {
               setPage(p as Page)
