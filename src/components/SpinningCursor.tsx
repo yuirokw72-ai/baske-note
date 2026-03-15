@@ -1,9 +1,20 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export function SpinningCursor() {
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const [show, setShow] = useState(false)
 
   useEffect(() => {
+    // Only show on devices with a fine pointer (mouse/trackpad), not touch screens
+    const mq = window.matchMedia('(pointer: fine)')
+    setShow(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setShow(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  useEffect(() => {
+    if (!show) return
     const onMove = (e: MouseEvent) => {
       if (wrapperRef.current) {
         wrapperRef.current.style.left = `${e.clientX - 14}px`
@@ -12,7 +23,9 @@ export function SpinningCursor() {
     }
     window.addEventListener('mousemove', onMove, { passive: true })
     return () => window.removeEventListener('mousemove', onMove)
-  }, [])
+  }, [show])
+
+  if (!show) return null
 
   return (
     <div

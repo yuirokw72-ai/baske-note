@@ -3,7 +3,13 @@ import { Home, Calendar, BookOpen, Trophy, Target, BarChart2, Clipboard, X } fro
 import { useLanguage } from '../contexts/LanguageContext'
 import { SpinningCursor } from '../components/SpinningCursor'
 import { Dashboard } from './Dashboard'
-import type { PracticeLog, GameRecord, Goal } from '../types'
+import { PracticeNote } from './PracticeNote'
+import { GameRecordPage } from './GameRecord'
+import { GoalsPage } from './Goals'
+import { SkillCheck } from './SkillCheck'
+import { FormationsPage } from './FormationsPage'
+import { CalendarPage } from './Calendar'
+import type { PracticeLog, GameRecord, Goal, SkillRecord, Formation } from '../types'
 
 // ===== サンプルデータ =====
 const today = new Date()
@@ -168,6 +174,61 @@ function getSampleGoals(lang: string): Goal[] {
   ]
 }
 
+function getSampleSkills(): SkillRecord[] {
+  const levels: [string, number][] = [
+    ['sk_drive', 4], ['sk_mid', 3], ['sk_three', 4], ['sk_ft', 3],
+    ['sk_layup_strong', 4], ['sk_layup_weak', 2], ['sk_pass', 3], ['sk_offball', 3],
+    ['sk_1on1d', 2], ['sk_helpd', 2], ['sk_boxout', 3], ['sk_reb', 3],
+    ['sk_footwork', 3], ['sk_speed', 4], ['sk_stamina', 2], ['sk_strength', 3], ['sk_jump', 3],
+    ['sk_decision', 3], ['sk_vision', 3], ['sk_comm', 2], ['sk_clutch', 3], ['sk_mental', 3],
+  ]
+  return levels.map(([id, level]) => ({ id, level, lastUpdated: NOW }))
+}
+
+function getSampleFormations(lang: string): Formation[] {
+  return [
+    {
+      id: 'sf1',
+      name: lang === 'en' ? 'Pick & Roll Pattern A' : 'ピック&ロール Aパターン',
+      courtType: 'half',
+      category: 'offense',
+      players: [
+        { id: 'o1', x: 0.46, y: 0.80, hasBall: true },
+        { id: 'o2', x: 0.84, y: 0.52 },
+        { id: 'o3', x: 0.16, y: 0.60 },
+        { id: 'o4', x: 0.84, y: 0.22 },
+        { id: 'o5', x: 0.44, y: 0.64 },
+      ],
+      arrows: [
+        { id: 'pr1', type: 'screen',  x1: 0.44, y1: 0.64, x2: 0.50, y2: 0.74 },
+        { id: 'pr2', type: 'dribble', x1: 0.46, y1: 0.80, x2: 0.70, y2: 0.56, cx: 0.54, cy: 0.64 },
+        { id: 'pr3', type: 'cut',     x1: 0.50, y1: 0.74, x2: 0.56, y2: 0.18, cx: 0.60, cy: 0.44 },
+        { id: 'pr4', type: 'pass',    x1: 0.70, y1: 0.56, x2: 0.56, y2: 0.18, cx: 0.66, cy: 0.34 },
+      ],
+      createdAt: NOW,
+    },
+    {
+      id: 'sf2',
+      name: lang === 'en' ? '2-3 Zone Defense' : '2-3ゾーンDF',
+      courtType: 'half',
+      category: 'defense',
+      players: [
+        { id: 'd1', x: 0.34, y: 0.70 },
+        { id: 'd2', x: 0.66, y: 0.70 },
+        { id: 'd3', x: 0.16, y: 0.30 },
+        { id: 'd4', x: 0.84, y: 0.30 },
+        { id: 'd5', x: 0.50, y: 0.18 },
+      ],
+      arrows: [
+        { id: 'z1', type: 'cut', x1: 0.66, y1: 0.70, x2: 0.80, y2: 0.58, cx: 0.74, cy: 0.62 },
+        { id: 'z2', type: 'cut', x1: 0.34, y1: 0.70, x2: 0.52, y2: 0.65 },
+        { id: 'z3', type: 'cut', x1: 0.84, y1: 0.30, x2: 0.84, y2: 0.46 },
+      ],
+      createdAt: NOW,
+    },
+  ]
+}
+
 type Page = 'home' | 'calendar' | 'practice' | 'game' | 'goals' | 'skills' | 'formations'
 
 interface Props {
@@ -182,6 +243,10 @@ export function GuestPreview({ onSignIn }: Props) {
   const sampleLogs = getSampleLogs(lang)
   const sampleGames = getSampleGames(lang)
   const sampleGoals = getSampleGoals(lang)
+  const sampleSkills = getSampleSkills()
+  const sampleFormations = getSampleFormations(lang)
+
+  const signUp = () => setShowSignUpModal(true)
 
   const NAV_IDS: { id: Page; key: string; Icon: React.ElementType }[] = [
     { id: 'home',       key: 'nav.home',       Icon: Home },
@@ -210,40 +275,77 @@ export function GuestPreview({ onSignIn }: Props) {
       )
     }
 
-    // 他のページは「サインアップで使える」プレビュー画面
-    const pageInfo: Record<string, { icon: string; ja: string; en: string; desc_ja: string; desc_en: string }> = {
-      practice: { icon: '📓', ja: '練習ノート', en: 'Practice Log', desc_ja: '毎回の練習を記録して成長を可視化', desc_en: 'Log every practice and track your growth' },
-      game:     { icon: '🏆', ja: '試合記録',   en: 'Game Records', desc_ja: '試合のスタッツと振り返りを保存', desc_en: 'Save game stats and reflections' },
-      goals:    { icon: '🎯', ja: '目標管理',   en: 'Goals',         desc_ja: '短期・長期目標を設定して進捗管理', desc_en: 'Set and track short & long-term goals' },
-      skills:   { icon: '📊', ja: 'スキルチェック', en: 'Skill Check',  desc_ja: '22項目のスキルを自己評価して成長グラフ表示', desc_en: 'Rate 22 skills and see your growth graph' },
-      formations: { icon: '🗂️', ja: '作戦ボード', en: 'Play Board',  desc_ja: 'フォーメーションを描いてチームで共有', desc_en: 'Draw plays and share with your team' },
-      calendar: { icon: '📅', ja: 'カレンダー', en: 'Calendar',      desc_ja: '練習・試合をカレンダーで一覧表示', desc_en: 'View practice and games on a calendar' },
-    }
-    const info = pageInfo[page]
-
-    return (
-      <div style={{ textAlign: 'center', padding: '48px 16px' }}>
-        <div style={{ fontSize: '3rem', marginBottom: 16 }}>{info.icon}</div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#1E3A5F', marginBottom: 8, fontFamily: "'Klee One', cursive" }}>
-          {lang === 'ja' ? info.ja : info.en}
-        </h2>
-        <p style={{ color: '#7A6E5F', fontSize: '0.9rem', marginBottom: 32, lineHeight: 1.7 }}>
-          {lang === 'ja' ? info.desc_ja : info.desc_en}
-        </p>
-        <button
-          onClick={() => setShowSignUpModal(true)}
-          style={{
-            backgroundColor: '#1E3A5F', color: 'white',
-            padding: '14px 32px', borderRadius: 14,
-            fontWeight: 700, fontSize: '0.95rem',
-            boxShadow: '0 4px 16px rgba(30,58,95,0.25)',
-            border: 'none', cursor: 'pointer',
+    if (page === 'calendar') {
+      return (
+        <CalendarPage
+          practiceLogs={sampleLogs}
+          gameRecords={sampleGames}
+          onNavigate={(p) => {
+            if (p === 'practice' || p === 'game') setPage(p as Page)
           }}
-        >
-          {lang === 'ja' ? 'Googleでサインアップして使い始める' : 'Sign up with Google to get started'}
-        </button>
-      </div>
-    )
+        />
+      )
+    }
+
+    if (page === 'practice') {
+      return (
+        <PracticeNote
+          logs={sampleLogs}
+          latestNextChallenge={sampleLogs[0].nextChallenge}
+          onAdd={() => signUp()}
+          onUpdate={() => signUp()}
+          onDelete={() => signUp()}
+          onAddFormation={() => signUp()}
+        />
+      )
+    }
+
+    if (page === 'game') {
+      return (
+        <GameRecordPage
+          records={sampleGames}
+          onAdd={() => signUp()}
+          onUpdate={() => signUp()}
+          onDelete={() => signUp()}
+        />
+      )
+    }
+
+    if (page === 'goals') {
+      return (
+        <GoalsPage
+          goals={sampleGoals}
+          onAdd={() => signUp()}
+          onUpdate={() => signUp()}
+          onDelete={() => signUp()}
+        />
+      )
+    }
+
+    if (page === 'skills') {
+      return (
+        <SkillCheck
+          skillRecords={sampleSkills}
+          onUpdate={() => signUp()}
+        />
+      )
+    }
+
+    if (page === 'formations') {
+      return (
+        <FormationsPage
+          formations={sampleFormations}
+          onAdd={() => {
+            signUp()
+            return { id: '__signup__', name: '', courtType: 'half' as const, category: 'offense' as const, players: [], arrows: [], createdAt: '' }
+          }}
+          onUpdate={() => signUp()}
+          onDelete={() => signUp()}
+        />
+      )
+    }
+
+    return null
   }
 
   return (
@@ -254,19 +356,23 @@ export function GuestPreview({ onSignIn }: Props) {
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
         backgroundColor: '#1E3A5F',
-        padding: '10px 16px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '10px 12px',
+        display: 'flex', alignItems: 'center', gap: 8,
       }}>
-        <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.78rem', margin: 0 }}>
+        <p style={{
+          color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem', margin: 0,
+          flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
           {lang === 'ja' ? '👋 無料で使えます！サインアップで全機能を開放' : '👋 Free to use! Sign up to unlock all features'}
         </p>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
           <button
             onClick={() => setLang(lang === 'ja' ? 'en' : 'ja')}
             style={{
-              padding: '3px 10px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 700,
+              padding: '3px 8px', borderRadius: 20, fontSize: '0.68rem', fontWeight: 700,
               backgroundColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)',
               border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer',
+              whiteSpace: 'nowrap',
             }}
           >
             {lang === 'ja' ? 'EN' : 'JA'}
@@ -274,10 +380,11 @@ export function GuestPreview({ onSignIn }: Props) {
           <button
             onClick={() => setShowSignUpModal(true)}
             style={{
-              padding: '6px 14px', borderRadius: 20, fontSize: '0.78rem', fontWeight: 700,
+              padding: '6px 12px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 700,
               backgroundColor: '#E07B2A', color: 'white',
               border: 'none', cursor: 'pointer',
               boxShadow: '0 2px 8px rgba(224,123,42,0.4)',
+              whiteSpace: 'nowrap',
             }}
           >
             {lang === 'ja' ? 'サインアップ' : 'Sign Up'}
@@ -292,15 +399,13 @@ export function GuestPreview({ onSignIn }: Props) {
         </div>
       </main>
 
-      {/* ボトムナビ */}
+      {/* ボトムナビ - ネイビー背景で見やすく */}
       <nav
         className="fixed bottom-0 left-0 right-0"
         style={{
-          backgroundColor: 'rgba(255,255,255,0.96)',
-          borderTop: '1px solid rgba(195,175,148,0.4)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          boxShadow: '0 -1px 12px rgba(0,0,0,0.06)',
+          backgroundColor: '#1E3A5F',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 -2px 16px rgba(0,0,0,0.25)',
         }}
       >
         <div className="max-w-md mx-auto flex">
@@ -311,7 +416,7 @@ export function GuestPreview({ onSignIn }: Props) {
                 key={id}
                 onClick={() => setPage(id)}
                 className="flex-1 flex flex-col items-center py-2 gap-0.5 transition-colors relative"
-                style={{ color: active ? '#E07B2A' : '#A89F92' }}
+                style={{ color: active ? '#E07B2A' : 'rgba(255,255,255,0.65)' }}
               >
                 {active && (
                   <div
@@ -346,6 +451,7 @@ export function GuestPreview({ onSignIn }: Props) {
         >
           <div
             style={{
+              position: 'relative',
               backgroundColor: 'white',
               borderRadius: '24px 24px 0 0',
               padding: '32px 24px 40px',
@@ -406,4 +512,3 @@ export function GuestPreview({ onSignIn }: Props) {
     </div>
   )
 }
-
