@@ -386,6 +386,17 @@ export function GuestPreview({ onSignIn }: Props) {
             {lang === 'ja' ? 'EN' : 'JA'}
           </button>
           <button
+            onClick={onSignIn}
+            style={{
+              padding: '6px 10px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 700,
+              backgroundColor: 'transparent', color: 'rgba(255,255,255,0.85)',
+              border: '1px solid rgba(255,255,255,0.35)', cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {lang === 'ja' ? 'ログイン' : 'Log In'}
+          </button>
+          <button
             onClick={() => setShowSignUpModal(true)}
             style={{
               padding: '6px 12px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 700,
@@ -395,7 +406,7 @@ export function GuestPreview({ onSignIn }: Props) {
               whiteSpace: 'nowrap',
             }}
           >
-            {lang === 'ja' ? 'サインアップ' : 'Sign Up'}
+            {lang === 'ja' ? '登録' : 'Sign Up'}
           </button>
         </div>
       </div>
