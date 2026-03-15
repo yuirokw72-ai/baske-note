@@ -546,6 +546,78 @@ export const translations: Record<Lang, Record<string, string>> = {
     'cf.improvePh':   '次はここを修正してほしい',
     'cf.nextPh.practice': '次の練習で意識すること',
     'cf.nextPh.game':     '次の試合で意識すること',
+
+    // ===== Settings: コーチ管理 =====
+    'settings.myCoach':       'マイコーチ',
+    'settings.inviteCoach':   'コーチを招待する',
+    'settings.inviteCopy':    'コピー',
+    'settings.inviteCopied':  'コピーしました！',
+    'settings.invitePending': '招待中',
+    'settings.inviteExpiry':  'あと{n}日',
+    'settings.revokeCoach':   '取り消す',
+    'settings.noCoaches':     'コーチはまだいません',
+
+    // ===== Settings: チーム管理 =====
+    'settings.teams':              'チーム',
+    'settings.createTeam':         'チームを作成する',
+    'settings.joinTeam':           'チームに参加する',
+    'settings.joinTeamPlaceholder':'招待リンクを貼り付け',
+    'settings.teamCoach':          'コーチ',
+    'settings.teamPlayer':         '選手',
+    'settings.teamManage':         '管理',
+    'settings.noTeams':            'チームはまだありません',
+
+    // ===== TeamModal =====
+    'team.inviteLink':      '招待リンク',
+    'team.regenerateToken': 'リンクを再生成',
+    'team.members':         'メンバー',
+    'team.kickMember':      '除名',
+    'team.leave':           'チームから退出',
+
+    // ===== Dashboard: コーチ/チームセクション =====
+    'dash.myAthletes':       '担当選手・チーム',
+    'dash.coachFB':          'コーチからのFB',
+    'dash.coachFBReview':    '確認する',
+    'dash.newSharedRecords': '新しい共有記録 {n}件',
+
+    // ===== AthleteModal =====
+    'athlete.addFB':     'FBを追加',
+    'athlete.editFB':    'FBを編集',
+    'athlete.noRecords': 'まだ記録がありません',
+
+    // ===== PracticeNote / GameRecord: チーム共有 =====
+    'practice.shareWithTeam': 'チームに共有する',
+    'practice.sharePrivate':  '非公開（自分だけ）',
+
+    // ===== 招待フロー =====
+    'invite.coachAcceptTitle': 'コーチ招待',
+    'invite.coachNameLabel':   'あなたの名前（コーチ名）',
+    'invite.coachAcceptBtn':   'コーチとして参加する',
+    'invite.accepted':         '登録が完了しました',
+    'invite.selfError':        '自分は招待できません',
+    'invite.expired':          'リンクの有効期限が切れています',
+    'invite.teamJoinTitle':    'チーム参加',
+    'invite.teamJoinMsg':      '{name} に参加しますか？',
+    'invite.teamJoinBtn':      '参加する',
+    'invite.teamJoined':       'チームに参加しました',
+
+    // ===== FormationsPage: 個人タブ =====
+    'formations.myFormations': '個人',
+
+    // ===== ModeSelect =====
+    'mode.title':           'モードを選んでください',
+    'mode.individual':      '個人プレイヤー',
+    'mode.individualSub':   '1人で記録を管理\nコーチを招待可',
+    'mode.team':            'チームモード',
+    'mode.teamSub':         'チームを作成して\nみんなで使う',
+    'mode.later':           'あとで設定から変更できます',
+    'mode.createTeam':      'チームを新しく作る',
+    'mode.joinTeam':        '招待リンクで参加する',
+    'mode.teamNamePh':      'チーム名を入力',
+    'mode.createBtn':       '作成する →',
+    'mode.joinLinkPh':      'リンクを貼り付け...',
+    'mode.joinBtn':         '参加する →',
+    'mode.skip':            '後で設定から行う',
   },
 
   en: {
@@ -1093,5 +1165,77 @@ export const translations: Record<Lang, Record<string, string>> = {
     'cf.improvePh':   'What to improve next time',
     'cf.nextPh.practice': 'Focus for next practice',
     'cf.nextPh.game':     'Focus for next game',
+
+    // ===== Settings: Coach management =====
+    'settings.myCoach':       'My Coach',
+    'settings.inviteCoach':   'Invite a Coach',
+    'settings.inviteCopy':    'Copy',
+    'settings.inviteCopied':  'Copied!',
+    'settings.invitePending': 'Pending',
+    'settings.inviteExpiry':  '{n} days left',
+    'settings.revokeCoach':   'Revoke',
+    'settings.noCoaches':     'No coaches yet',
+
+    // ===== Settings: Team management =====
+    'settings.teams':              'Teams',
+    'settings.createTeam':         'Create Team',
+    'settings.joinTeam':           'Join a Team',
+    'settings.joinTeamPlaceholder':'Paste invite link',
+    'settings.teamCoach':          'Coach',
+    'settings.teamPlayer':         'Player',
+    'settings.teamManage':         'Manage',
+    'settings.noTeams':            'No teams yet',
+
+    // ===== TeamModal =====
+    'team.inviteLink':      'Invite Link',
+    'team.regenerateToken': 'Regenerate Link',
+    'team.members':         'Members',
+    'team.kickMember':      'Remove',
+    'team.leave':           'Leave Team',
+
+    // ===== Dashboard: Coach/Team section =====
+    'dash.myAthletes':       'My Athletes & Teams',
+    'dash.coachFB':          'Coach Feedback',
+    'dash.coachFBReview':    'Review',
+    'dash.newSharedRecords': '{n} new shared records',
+
+    // ===== AthleteModal =====
+    'athlete.addFB':     'Add Feedback',
+    'athlete.editFB':    'Edit Feedback',
+    'athlete.noRecords': 'No records yet',
+
+    // ===== PracticeNote / GameRecord: Team sharing =====
+    'practice.shareWithTeam': 'Share with Team',
+    'practice.sharePrivate':  'Private (only me)',
+
+    // ===== Invite flow =====
+    'invite.coachAcceptTitle': 'Coach Invite',
+    'invite.coachNameLabel':   'Your name (shown to athlete)',
+    'invite.coachAcceptBtn':   'Join as Coach',
+    'invite.accepted':         "You're now registered as their coach",
+    'invite.selfError':        'You cannot coach yourself',
+    'invite.expired':          'This invite link has expired',
+    'invite.teamJoinTitle':    'Join Team',
+    'invite.teamJoinMsg':      'Join {name}?',
+    'invite.teamJoinBtn':      'Join',
+    'invite.teamJoined':       'Joined the team!',
+
+    // ===== FormationsPage: Personal tab =====
+    'formations.myFormations': 'Personal',
+
+    // ===== ModeSelect =====
+    'mode.title':           'Choose your mode',
+    'mode.individual':      'Solo Player',
+    'mode.individualSub':   'Manage records solo\nInvite a coach anytime',
+    'mode.team':            'Team Mode',
+    'mode.teamSub':         'Create or join a team\nand use it together',
+    'mode.later':           'You can change this later in Settings',
+    'mode.createTeam':      'Create a new team',
+    'mode.joinTeam':        'Join with an invite link',
+    'mode.teamNamePh':      'Team name',
+    'mode.createBtn':       'Create →',
+    'mode.joinLinkPh':      'Paste link here...',
+    'mode.joinBtn':         'Join →',
+    'mode.skip':            'Skip for now',
   },
 }

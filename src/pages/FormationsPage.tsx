@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, ChevronRight, BookOpen } from 'lucide-react'
 import type { Formation, CourtType, FormationCategory, PlayerPos } from '../types'
 import { FormationDiagram } from '../components/FormationDiagram'
 import { useLanguage } from '../contexts/LanguageContext'
+import { supabase } from '../lib/supabase'
+import type { useTeams } from '../hooks/useTeams'
+import { useAuth } from '../contexts/AuthContext'
 
 // ===== プリセットフォーメーション =====
 const PRESET_FORMATIONS: Formation[] = [
@@ -167,6 +170,7 @@ interface Props {
   onAdd: (f: Omit<Formation, 'id' | 'createdAt'>) => Formation
   onUpdate: (id: string, updates: Partial<Formation>) => void
   onDelete: (id: string) => void
+  teams: ReturnType<typeof useTeams>
 }
 
 // ===== Preset Detail View =====
@@ -379,11 +383,43 @@ function FormationDetail({ formation, onUpdate, onDelete, onBack }: {
 }
 
 // ===== Main Page =====
-export function FormationsPage({ formations, onAdd, onUpdate, onDelete }: Props) {
-  const { t } = useLanguage()
+export function FormationsPage({ formations, onAdd, onUpdate, onDelete, teams }: Props) {
+  const { t, lang } = useLanguage()
+  const { user } = useAuth()
   const [view, setView]             = useState<'list' | 'detail' | 'preset'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showNew, setShowNew]       = useState(false)
+
+  // チームタブ: 'personal' | teamId
+  const [activeTab, setActiveTab] = useState<'personal' | string>('personal')
+  const [teamFormations, setTeamFormations] = useState<Formation[]>([])
+  const [teamFormLoading, setTeamFormLoading] = useState(false)
+
+  const myTeams = teams.myTeams
+  const activeTeam = myTeams.find(t => t.id === activeTab)
+
+  // チームタブが選択されたらフォーメーションを取得
+  useEffect(() => {
+    if (activeTab === 'personal' || !activeTab) return
+    setTeamFormLoading(true)
+    supabase
+      .from('formations')
+      .select('*')
+      .eq('team_id', activeTab)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setTeamFormations((data ?? []).map(r => ({
+          id:        r.id as string,
+          name:      (r.data as Formation).name ?? '',
+          courtType: (r.data as Formation).courtType ?? 'half',
+          category:  (r.data as Formation).category ?? 'offense',
+          players:   (r.data as Formation).players ?? [],
+          arrows:    (r.data as Formation).arrows ?? [],
+          createdAt: r.created_at as string,
+        })))
+        setTeamFormLoading(false)
+      })
+  }, [activeTab])
 
   const selected       = formations.find(f => f.id === selectedId)
   const selectedPreset = PRESET_FORMATIONS.find(f => f.id === selectedId)
@@ -431,22 +467,158 @@ export function FormationsPage({ formations, onAdd, onUpdate, onDelete }: Props)
 
   const categories = ['offense', 'defense'] as FormationCategory[]
 
+  // チームコーチがチームフォーメーションを追加
+  const handleCreateTeamFormation = async (name: string, courtType: CourtType, category: FormationCategory) => {
+    if (!user || !activeTeam) return
+    const newF: Omit<Formation, 'id' | 'createdAt'> = { name, courtType, category, players: makeDefaultPlayers(courtType), arrows: [] }
+    const { data } = await supabase
+      .from('formations')
+      .insert({ user_id: user.id, team_id: activeTeam.id, data: newF })
+      .select()
+      .single()
+    if (data) {
+      const added: Formation = { ...(data.data as Formation), id: data.id as string, createdAt: data.created_at as string }
+      setTeamFormations(prev => [added, ...prev])
+    }
+    setShowNew(false)
+  }
+
+  const handleDeleteTeamFormation = async (formId: string) => {
+    await supabase.from('formations').delete().eq('id', formId)
+    setTeamFormations(prev => prev.filter(f => f.id !== formId))
+    setView('list')
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold font-klee" style={{ color: '#1E1A14' }}>{t('fp.title')}</h1>
           <p className="text-xs mt-0.5" style={{ color: '#7A6E5F' }}>
-            {t('fp.count').replace('{n}', String(formations.length))}
+            {t('fp.count').replace('{n}', String(activeTab === 'personal' ? formations.length : teamFormations.length))}
           </p>
         </div>
-        <button onClick={() => setShowNew(true)}
-          className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold"
-          style={{ backgroundColor: '#1E3A5F', color: 'white' }}>
-          <Plus size={14} /> {t('fp.newButton')}
-        </button>
+        {/* コーチはチームフォーメーションを追加可、選手は不可 */}
+        {(activeTab === 'personal' || (activeTeam && activeTeam.myRole === 'coach')) && (
+          <button onClick={() => setShowNew(true)}
+            className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold"
+            style={{ backgroundColor: '#1E3A5F', color: 'white' }}>
+            <Plus size={14} /> {t('fp.newButton')}
+          </button>
+        )}
       </div>
 
+      {/* 個人/チームタブ（チームがある場合） */}
+      {myTeams.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto' }}>
+          <button
+            onClick={() => { setActiveTab('personal'); setView('list') }}
+            style={{
+              padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+              fontWeight: 600, fontSize: '0.78rem', whiteSpace: 'nowrap',
+              background: activeTab === 'personal' ? '#1E3A5F' : 'rgba(195,175,148,0.25)',
+              color: activeTab === 'personal' ? 'white' : '#7A6E5F',
+            }}
+          >
+            {lang === 'ja' ? '個人' : 'Personal'}
+          </button>
+          {myTeams.map(tm => (
+            <button
+              key={tm.id}
+              onClick={() => { setActiveTab(tm.id); setView('list') }}
+              style={{
+                padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                fontWeight: 600, fontSize: '0.78rem', whiteSpace: 'nowrap',
+                background: activeTab === tm.id ? '#1E3A5F' : 'rgba(195,175,148,0.25)',
+                color: activeTab === tm.id ? 'white' : '#7A6E5F',
+              }}
+            >
+              {tm.myRole === 'coach' ? '👑' : '🏀'} {tm.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* チームタブ選択中 */}
+      {activeTab !== 'personal' && (
+        <>
+          {teamFormLoading ? (
+            <p style={{ textAlign: 'center', color: '#A89F92', fontSize: '0.85rem', padding: '20px 0' }}>…</p>
+          ) : teamFormations.length === 0 ? (
+            <div className="nb-card text-center py-8">
+              <p className="text-3xl mb-3">🏀</p>
+              <p className="text-sm" style={{ color: '#7A6E5F' }}>{t('fp.noFormations')}</p>
+              {activeTeam?.myRole === 'coach' && (
+                <p className="text-sm font-semibold mt-1 cursor-pointer" style={{ color: '#E07B2A' }}
+                  onClick={() => setShowNew(true)}>
+                  {t('fp.createFirst')}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {teamFormations.map(f => (
+                <div key={f.id} className="nb-card-plain mb-2 cursor-pointer"
+                  onClick={() => { setSelectedId(f.id); setView('detail') }}>
+                  <div className="flex items-center gap-3">
+                    <MiniCourtPreview formation={f} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold" style={{ color: '#1E1A14' }}>{f.name}</p>
+                      <p className="text-xs mt-0.5" style={{ color: '#7A6E5F' }}>
+                        {f.courtType === 'half' ? t('fp.detail.half') : t('fp.detail.full')}
+                      </p>
+                    </div>
+                    <ChevronRight size={16} style={{ color: '#C8BFB2', flexShrink: 0 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* チームフォーメーション詳細 */}
+          {view === 'detail' && (() => {
+            const tf = teamFormations.find(f => f.id === selectedId)
+            if (!tf) return null
+            const isCoach = activeTeam?.myRole === 'coach'
+            return (
+              <div style={{
+                position: 'fixed', inset: 0, zIndex: 60, background: '#FDFAF5',
+                overflowY: 'auto', padding: '20px 16px 40px',
+              }}>
+                <button onClick={() => setView('list')} style={{ color: '#7A6E5F', fontSize: '1.25rem', marginBottom: 16 }}>←</button>
+                <h1 className="text-xl font-bold font-klee mb-4" style={{ color: '#1E1A14' }}>{tf.name}</h1>
+                <FormationDiagram
+                  formation={tf}
+                  readonly={!isCoach}
+                  onChange={isCoach ? updates => {
+                    supabase.from('formations').update({ data: { ...tf, ...updates } }).eq('id', tf.id)
+                    setTeamFormations(prev => prev.map(f => f.id === tf.id ? { ...f, ...updates } : f))
+                  } : () => {}}
+                />
+                {isCoach && (
+                  <button
+                    onClick={() => handleDeleteTeamFormation(tf.id)}
+                    className="w-full mt-6 py-3 rounded-xl text-sm"
+                    style={{ color: '#DC3545', border: '1px solid rgba(220,53,69,0.3)', backgroundColor: 'rgba(220,53,69,0.04)' }}>
+                    {t('fp.detail.delete')}
+                  </button>
+                )}
+              </div>
+            )
+          })()}
+
+          {showNew && activeTeam?.myRole === 'coach' && (
+            <NewFormationDialog
+              onClose={() => setShowNew(false)}
+              onSubmit={handleCreateTeamFormation}
+            />
+          )}
+        </>
+      )}
+
+      {/* 個人タブ選択中 */}
+      {activeTab === 'personal' && (
+        <>
       {/* ユーザー作成フォーメーション */}
       {formations.length === 0 ? (
         <div className="nb-card text-center py-8" style={{}}
@@ -534,11 +706,13 @@ export function FormationsPage({ formations, onAdd, onUpdate, onDelete }: Props)
         })}
       </div>
 
-      {showNew && (
+      {showNew && activeTab === 'personal' && (
         <NewFormationDialog
           onClose={() => setShowNew(false)}
           onSubmit={handleCreate}
         />
+      )}
+        </>
       )}
     </div>
   )

@@ -2,16 +2,36 @@ import { useState } from 'react'
 import { getProfile, saveProfile } from '../lib/profile'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
+import { TeamModal } from '../components/TeamModal'
+import type { TeamWithRole } from '../types'
+import type { useCoachRelationships } from '../hooks/useCoachRelationships'
+import type { useTeams } from '../hooks/useTeams'
 
 interface Props {
   onBack: () => void
+  coachRel: ReturnType<typeof useCoachRelationships>
+  teams:    ReturnType<typeof useTeams>
 }
 
-export function SettingsPage({ onBack }: Props) {
+export function SettingsPage({ onBack, coachRel, teams }: Props) {
   const { lang, setLang } = useLanguage()
   const { user, signOut } = useAuth()
   const [motto, setMotto] = useState(() => getProfile().motto)
   const [saved, setSaved] = useState(false)
+
+  // コーチ招待
+  const [inviteUrl,  setInviteUrl]  = useState('')
+  const [inviteCopied, setInviteCopied] = useState(false)
+  const [showInvite, setShowInvite] = useState(false)
+
+  // チーム
+  const [activeTeamModal, setActiveTeamModal] = useState<TeamWithRole | null>(null)
+  const [showCreateTeam, setShowCreateTeam] = useState(false)
+  const [showJoinTeam,   setShowJoinTeam]   = useState(false)
+  const [newTeamName,    setNewTeamName]    = useState('')
+  const [joinLink,       setJoinLink]       = useState('')
+  const [teamBusy,       setTeamBusy]       = useState(false)
+  const [teamError,      setTeamError]      = useState('')
 
   const handleSave = () => {
     saveProfile({ motto })
@@ -19,8 +39,68 @@ export function SettingsPage({ onBack }: Props) {
     setTimeout(() => setSaved(false), 2000)
   }
 
+  const handleInviteCoach = async () => {
+    try {
+      const url = await coachRel.createInvite()
+      setInviteUrl(url)
+      setShowInvite(true)
+    } catch { /* ignore */ }
+  }
+
+  const handleCopyInvite = async () => {
+    await navigator.clipboard.writeText(inviteUrl)
+    setInviteCopied(true)
+    setTimeout(() => setInviteCopied(false), 2000)
+  }
+
+  const handleCreateTeam = async () => {
+    if (!newTeamName.trim()) return
+    setTeamBusy(true)
+    setTeamError('')
+    try {
+      await teams.createTeam(newTeamName.trim())
+      setNewTeamName('')
+      setShowCreateTeam(false)
+    } catch {
+      setTeamError(lang === 'ja' ? '作成に失敗しました' : 'Failed to create team')
+    } finally {
+      setTeamBusy(false)
+    }
+  }
+
+  const handleJoinTeam = async () => {
+    setTeamBusy(true)
+    setTeamError('')
+    try {
+      const token = joinLink.includes('?team=')
+        ? joinLink.split('?team=')[1].split('&')[0]
+        : joinLink.trim()
+      const result = await teams.joinTeam(token)
+      if (!result.ok) {
+        setTeamError(lang === 'ja' ? '招待リンクが無効です' : 'Invalid invite link')
+      } else {
+        setJoinLink('')
+        setShowJoinTeam(false)
+      }
+    } catch {
+      setTeamError(lang === 'ja' ? '参加に失敗しました' : 'Failed to join team')
+    } finally {
+      setTeamBusy(false)
+    }
+  }
+
+  // 日数計算
+  const daysLeft = (expiresAt: string) => {
+    const diff = new Date(expiresAt).getTime() - Date.now()
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+  }
+
   return (
     <div>
+      {activeTeamModal && (
+        <TeamModal team={activeTeamModal} onClose={() => setActiveTeamModal(null)} />
+      )}
+
       {/* ヘッダー */}
       <div className="flex items-center gap-3 mb-6">
         <button onClick={onBack} className="text-xl" style={{ color: '#7A6E5F' }}>←</button>
@@ -56,6 +136,244 @@ export function SettingsPage({ onBack }: Props) {
             ? (lang === 'ja' ? '✓ 保存しました' : '✓ Saved!')
             : (lang === 'ja' ? '保存する' : 'Save')}
         </button>
+
+        {/* マイコーチ */}
+        {user && (
+          <div className="nb-card-plain">
+            <p className="text-xs font-bold mb-3" style={{ color: '#1E3A5F' }}>
+              🤝 {lang === 'ja' ? 'マイコーチ' : 'My Coach'}
+            </p>
+
+            {coachRel.loading ? (
+              <p className="text-xs" style={{ color: '#A89F92' }}>…</p>
+            ) : coachRel.myCoaches.length === 0 ? (
+              <p className="text-xs mb-3" style={{ color: '#A89F92' }}>
+                {lang === 'ja' ? 'コーチはまだいません' : 'No coaches yet'}
+              </p>
+            ) : (
+              <div className="space-y-2 mb-3">
+                {coachRel.myCoaches.map(cr => (
+                  <div key={cr.id} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    background: 'rgba(195,175,148,0.15)', borderRadius: 10, padding: '8px 12px',
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.82rem', color: '#1E1A14', fontWeight: 600 }}>
+                        {cr.coachName ?? (lang === 'ja' ? '名前未設定' : 'No name')}
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: cr.status === 'accepted' ? '#2E7D52' : '#E07B2A', marginLeft: 8 }}>
+                        {cr.status === 'accepted'
+                          ? (lang === 'ja' ? '✓ 承認済み' : '✓ Accepted')
+                          : `${lang === 'ja' ? '招待中' : 'Pending'} (${lang === 'ja' ? `あと${daysLeft(cr.expiresAt)}日` : `${daysLeft(cr.expiresAt)}d left`})`
+                        }
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => coachRel.revokeCoach(cr.id)}
+                      style={{
+                        padding: '3px 10px', borderRadius: 8,
+                        border: '1px solid rgba(220,53,69,0.25)',
+                        background: 'rgba(220,53,69,0.06)',
+                        color: '#DC3545', fontSize: '0.72rem', cursor: 'pointer',
+                      }}
+                    >
+                      {lang === 'ja' ? '取り消す' : 'Revoke'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!showInvite ? (
+              <button
+                onClick={handleInviteCoach}
+                style={{
+                  width: '100%', padding: '9px', borderRadius: 10, border: 'none',
+                  background: '#1E3A5F', color: 'white',
+                  fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                + {lang === 'ja' ? 'コーチを招待する' : 'Invite a Coach'}
+              </button>
+            ) : (
+              <div>
+                <p className="text-xs mb-1" style={{ color: '#7A6E5F' }}>
+                  {lang === 'ja' ? '招待リンク（7日間有効）' : 'Invite link (valid 7 days)'}
+                </p>
+                <div style={{
+                  background: 'rgba(195,175,148,0.2)', borderRadius: 10,
+                  padding: '8px 12px', fontSize: '0.7rem', color: '#7A6E5F',
+                  wordBreak: 'break-all', marginBottom: 8,
+                }}>
+                  {inviteUrl}
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={handleCopyInvite}
+                    style={{
+                      flex: 1, padding: '8px', borderRadius: 10, border: 'none',
+                      background: inviteCopied ? '#2E7D52' : '#1E3A5F',
+                      color: 'white', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    {inviteCopied ? (lang === 'ja' ? '✓ コピー済み' : '✓ Copied') : (lang === 'ja' ? 'コピー' : 'Copy')}
+                  </button>
+                  <button
+                    onClick={() => setShowInvite(false)}
+                    style={{
+                      padding: '8px 12px', borderRadius: 10,
+                      border: '1px solid rgba(195,175,148,0.4)',
+                      background: 'transparent', color: '#7A6E5F', fontSize: '0.78rem', cursor: 'pointer',
+                    }}
+                  >
+                    {lang === 'ja' ? '閉じる' : 'Close'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* チーム管理 */}
+        {user && (
+          <div className="nb-card-plain">
+            <p className="text-xs font-bold mb-3" style={{ color: '#1E3A5F' }}>
+              🏀 {lang === 'ja' ? 'チーム' : 'Teams'}
+            </p>
+
+            {teams.loading ? (
+              <p className="text-xs" style={{ color: '#A89F92' }}>…</p>
+            ) : teams.myTeams.length === 0 ? (
+              <p className="text-xs mb-3" style={{ color: '#A89F92' }}>
+                {lang === 'ja' ? 'チームはまだありません' : 'No teams yet'}
+              </p>
+            ) : (
+              <div className="space-y-2 mb-3">
+                {teams.myTeams.map(team => (
+                  <div key={team.id} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    background: 'rgba(195,175,148,0.15)', borderRadius: 10, padding: '8px 12px',
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', marginRight: 6 }}>
+                        {team.myRole === 'coach' ? '👑' : '🏀'}
+                      </span>
+                      <span style={{ fontSize: '0.85rem', color: '#1E1A14', fontWeight: 600 }}>{team.name}</span>
+                      <span style={{ fontSize: '0.7rem', color: '#A89F92', marginLeft: 6 }}>
+                        ({lang === 'ja'
+                          ? (team.myRole === 'coach' ? 'コーチ' : '選手')
+                          : (team.myRole === 'coach' ? 'Coach' : 'Player')
+                        })
+                      </span>
+                    </div>
+                    {team.myRole === 'coach' && (
+                      <button
+                        onClick={() => setActiveTeamModal(team)}
+                        style={{
+                          padding: '4px 10px', borderRadius: 8,
+                          border: '1px solid rgba(30,58,95,0.25)',
+                          background: 'rgba(30,58,95,0.06)',
+                          color: '#1E3A5F', fontSize: '0.72rem', cursor: 'pointer',
+                        }}
+                      >
+                        {lang === 'ja' ? '管理' : 'Manage'}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* チーム作成 */}
+            {!showCreateTeam && !showJoinTeam ? (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => setShowCreateTeam(true)}
+                  style={{
+                    flex: 1, padding: '8px', borderRadius: 10, border: 'none',
+                    background: '#1E3A5F', color: 'white', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
+                  }}
+                >
+                  + {lang === 'ja' ? 'チームを作成' : 'Create Team'}
+                </button>
+                <button
+                  onClick={() => setShowJoinTeam(true)}
+                  style={{
+                    flex: 1, padding: '8px', borderRadius: 10,
+                    border: '1px solid rgba(30,58,95,0.3)',
+                    background: 'transparent', color: '#1E3A5F', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
+                  }}
+                >
+                  {lang === 'ja' ? '招待で参加' : 'Join by Link'}
+                </button>
+              </div>
+            ) : showCreateTeam ? (
+              <div>
+                <input
+                  value={newTeamName}
+                  onChange={e => setNewTeamName(e.target.value)}
+                  placeholder={lang === 'ja' ? 'チーム名を入力' : 'Team name'}
+                  className="nb-textarea"
+                  style={{ marginBottom: 8 }}
+                />
+                {teamError && <p style={{ color: '#DC3545', fontSize: '0.75rem', marginBottom: 6 }}>{teamError}</p>}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={handleCreateTeam}
+                    disabled={teamBusy || !newTeamName.trim()}
+                    style={{
+                      flex: 1, padding: '8px', borderRadius: 10, border: 'none',
+                      background: newTeamName.trim() ? '#1E3A5F' : 'rgba(195,175,148,0.2)',
+                      color: newTeamName.trim() ? 'white' : '#A89F92',
+                      fontSize: '0.8rem', fontWeight: 600, cursor: newTeamName.trim() ? 'pointer' : 'default',
+                    }}
+                  >
+                    {teamBusy ? '…' : (lang === 'ja' ? '作成する' : 'Create')}
+                  </button>
+                  <button onClick={() => { setShowCreateTeam(false); setTeamError('') }} style={{
+                    padding: '8px 12px', borderRadius: 10,
+                    border: '1px solid rgba(195,175,148,0.4)',
+                    background: 'transparent', color: '#7A6E5F', fontSize: '0.78rem', cursor: 'pointer',
+                  }}>
+                    {lang === 'ja' ? 'キャンセル' : 'Cancel'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <input
+                  value={joinLink}
+                  onChange={e => setJoinLink(e.target.value)}
+                  placeholder={lang === 'ja' ? '招待リンクを貼り付け' : 'Paste invite link'}
+                  className="nb-textarea"
+                  style={{ marginBottom: 8 }}
+                />
+                {teamError && <p style={{ color: '#DC3545', fontSize: '0.75rem', marginBottom: 6 }}>{teamError}</p>}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={handleJoinTeam}
+                    disabled={teamBusy || !joinLink.trim()}
+                    style={{
+                      flex: 1, padding: '8px', borderRadius: 10, border: 'none',
+                      background: joinLink.trim() ? '#1E3A5F' : 'rgba(195,175,148,0.2)',
+                      color: joinLink.trim() ? 'white' : '#A89F92',
+                      fontSize: '0.8rem', fontWeight: 600, cursor: joinLink.trim() ? 'pointer' : 'default',
+                    }}
+                  >
+                    {teamBusy ? '…' : (lang === 'ja' ? '参加する' : 'Join')}
+                  </button>
+                  <button onClick={() => { setShowJoinTeam(false); setTeamError('') }} style={{
+                    padding: '8px 12px', borderRadius: 10,
+                    border: '1px solid rgba(195,175,148,0.4)',
+                    background: 'transparent', color: '#7A6E5F', fontSize: '0.78rem', cursor: 'pointer',
+                  }}>
+                    {lang === 'ja' ? 'キャンセル' : 'Cancel'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 言語設定 */}
         <div className="nb-card-plain">

@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Trophy, Star } from 'lucide-react'
-import type { GameRecord, GameResult, QuarterNote, CoachFeedback } from '../types'
+import type { GameRecord, GameResult, QuarterNote, CoachFeedback, TeamWithRole } from '../types'
 import { useLanguage } from '../contexts/LanguageContext'
 
 interface Props {
   records: GameRecord[]
-  onAdd: (r: Omit<GameRecord, 'id' | 'createdAt'>) => void
+  onAdd: (r: Omit<GameRecord, 'id' | 'createdAt'>) => Promise<GameRecord>
   onUpdate: (id: string, updates: Partial<GameRecord>) => void
   onDelete: (id: string) => void
+  teams: { myTeams: TeamWithRole[]; shareRecord: (id: string, type: 'practice' | 'game', teamId: string) => Promise<void> }
 }
 
 const RESULT_MAP: Record<GameResult, { labelKey: string; color: string; bg: string; border: string }> = {
@@ -96,13 +97,14 @@ function QuarterNoteEditor({ notes, onChange }: {
 }
 
 // ===== CoachFeedbackSection =====
-function CoachFeedbackSection({ feedback, onSave }: {
+function CoachFeedbackSection({ feedback, onSave, readonly }: {
   feedback?: CoachFeedback
   onSave: (fb: CoachFeedback) => void
+  readonly?: boolean
 }) {
   const { lang, t } = useLanguage()
   const today = new Date().toISOString().split('T')[0]
-  const [editing, setEditing] = useState(!feedback)
+  const [editing, setEditing] = useState(!feedback && !readonly)
   const [goodPoints, setGoodPoints]           = useState(feedback?.goodPoints ?? '')
   const [improvements, setImprovements]       = useState(feedback?.improvements ?? '')
   const [nextInstruction, setNextInstruction] = useState(feedback?.nextInstruction ?? '')
@@ -114,7 +116,9 @@ function CoachFeedbackSection({ feedback, onSave }: {
     setEditing(false)
   }
 
-  if (!editing && feedback) {
+  if (readonly && !feedback) return null
+
+  if ((!editing && feedback) || (readonly && feedback)) {
     return (
       <div className="nb-card-coach">
         <div className="flex items-center justify-between mb-3">
@@ -126,11 +130,13 @@ function CoachFeedbackSection({ feedback, onSave }: {
               </p>
             )}
           </div>
-          <button onClick={() => setEditing(true)}
-            className="text-xs px-3 py-1 rounded-lg"
-            style={{ backgroundColor: 'rgba(30,58,95,0.1)', color: '#1E3A5F' }}>
-            {t('cf.edit')}
-          </button>
+          {!readonly && (
+            <button onClick={() => setEditing(true)}
+              className="text-xs px-3 py-1 rounded-lg"
+              style={{ backgroundColor: 'rgba(30,58,95,0.1)', color: '#1E3A5F' }}>
+              {t('cf.edit')}
+            </button>
+          )}
         </div>
         {feedback.goodPoints && (
           <div className="mb-2">
@@ -198,15 +204,18 @@ function CoachFeedbackSection({ feedback, onSave }: {
 }
 
 // ===== GameForm =====
-function GameForm({ onSubmit, onCancel, initialData }: {
+function GameForm({ onSubmit, onCancel, initialData, myTeams, onSelectTeam }: {
   onSubmit: (r: Omit<GameRecord, 'id' | 'createdAt'>) => void
   onCancel: () => void
   initialData?: GameRecord
+  myTeams?: TeamWithRole[]
+  onSelectTeam?: (teamId: string | null) => void
 }) {
   const { t } = useLanguage()
   const isEditing = !!initialData
   const today = new Date().toISOString().split('T')[0]
   const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
 
   // Step 1
   const [date, setDate]               = useState(initialData?.date ?? today)
@@ -336,6 +345,35 @@ function GameForm({ onSubmit, onCancel, initialData }: {
               </div>
             </div>
           </div>
+
+          {/* チーム共有（任意） */}
+          {!isEditing && myTeams && myTeams.length > 0 && (
+            <div className="nb-card-plain">
+              <p className="text-xs font-bold mb-2" style={{ color: '#1E3A5F' }}>{t('practice.shareWithTeam')}</p>
+              <div className="space-y-1">
+                <button onClick={() => { setSelectedTeamId(null); onSelectTeam?.(null) }}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm"
+                  style={{
+                    background: selectedTeamId === null ? 'rgba(30,58,95,0.1)' : 'transparent',
+                    color: selectedTeamId === null ? '#1E3A5F' : '#7A6E5F',
+                    fontWeight: selectedTeamId === null ? 600 : 400,
+                  }}>
+                  ○ {t('practice.sharePrivate')}
+                </button>
+                {myTeams.map(team => (
+                  <button key={team.id} onClick={() => { setSelectedTeamId(team.id); onSelectTeam?.(team.id) }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm"
+                    style={{
+                      background: selectedTeamId === team.id ? 'rgba(224,123,42,0.1)' : 'transparent',
+                      color: selectedTeamId === team.id ? '#E07B2A' : '#7A6E5F',
+                      fontWeight: selectedTeamId === team.id ? 600 : 400,
+                    }}>
+                    ● {team.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button onClick={() => setStep(2)} disabled={!opponent.trim()} className="btn-primary">
             {t('gr.next1')}
@@ -575,6 +613,7 @@ function GameDetail({ record, onDelete, onUpdate, onEdit }: {
       <CoachFeedbackSection
         feedback={record.coachFeedback}
         onSave={fb => onUpdate({ coachFeedback: fb })}
+        readonly
       />
 
       <div className="flex gap-2">
@@ -594,11 +633,14 @@ function GameDetail({ record, onDelete, onUpdate, onEdit }: {
 }
 
 // ===== GameRecordPage (main) =====
-export function GameRecordPage({ records, onAdd, onUpdate, onDelete }: Props) {
+export function GameRecordPage({ records, onAdd, onUpdate, onDelete, teams }: Props) {
   const { lang, t } = useLanguage()
   const [view, setView] = useState<'list' | 'form' | 'detail' | 'edit'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [pendingShareTeamId, setPendingShareTeamId] = useState<string | null>(null)
   const selected = records.find(r => r.id === selectedId)
+
+  const playerTeams = teams.myTeams.filter(t => t.myRole === 'player')
 
   if (view === 'form') return (
     <div className="page-enter">
@@ -606,7 +648,19 @@ export function GameRecordPage({ records, onAdd, onUpdate, onDelete }: Props) {
         <button onClick={() => setView('list')} style={{ color: '#7A6E5F', fontSize: '1.25rem' }}>←</button>
         <h1 className="text-xl font-bold font-klee" style={{ color: '#1E3A5F' }}>{t('gr.formTitle')}</h1>
       </div>
-      <GameForm onSubmit={r => { onAdd(r); setView('list') }} onCancel={() => setView('list')} />
+      <GameForm
+        onSubmit={r => {
+          onAdd(r).then(newRecord => {
+            if (pendingShareTeamId) {
+              teams.shareRecord(newRecord.id, 'game', pendingShareTeamId).catch(console.error)
+            }
+          })
+          setView('list')
+        }}
+        onCancel={() => setView('list')}
+        myTeams={playerTeams}
+        onSelectTeam={setPendingShareTeamId}
+      />
     </div>
   )
 

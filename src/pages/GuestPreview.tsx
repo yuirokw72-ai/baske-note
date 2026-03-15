@@ -259,6 +259,9 @@ export function GuestPreview({ onSignIn }: Props) {
   ]
 
   const renderContent = () => {
+    const guestTeams = { myTeams: [], loading: false, refresh: async () => {}, createTeam: async () => { throw 0 }, joinTeam: async () => ({ ok: false as const }), leaveTeam: async () => {}, getTeamMembers: async () => [], resetInviteToken: async () => '', kickMember: async () => {}, shareRecord: async () => {}, unshareRecord: async () => {}, getSharedRecords: async () => [] }
+    const guestCoachRel = { myCoaches: [], myAthletes: [], loading: false, createInvite: async () => '', acceptInvite: async () => ({ ok: false as const }), revokeCoach: async () => {}, refresh: async () => {} }
+
     if (page === 'home') {
       return (
         <Dashboard
@@ -271,6 +274,8 @@ export function GuestPreview({ onSignIn }: Props) {
               setPage(p as Page)
             }
           }}
+          coachRelationships={guestCoachRel}
+          teams={guestTeams}
         />
       )
     }
@@ -292,10 +297,11 @@ export function GuestPreview({ onSignIn }: Props) {
         <PracticeNote
           logs={sampleLogs}
           latestNextChallenge={sampleLogs[0].nextChallenge}
-          onAdd={() => signUp()}
+          onAdd={() => { signUp(); return Promise.resolve({} as PracticeLog) }}
           onUpdate={() => signUp()}
           onDelete={() => signUp()}
           onAddFormation={() => signUp()}
+          teams={guestTeams}
         />
       )
     }
@@ -304,9 +310,10 @@ export function GuestPreview({ onSignIn }: Props) {
       return (
         <GameRecordPage
           records={sampleGames}
-          onAdd={() => signUp()}
+          onAdd={() => { signUp(); return Promise.resolve({} as GameRecord) }}
           onUpdate={() => signUp()}
           onDelete={() => signUp()}
+          teams={guestTeams}
         />
       )
     }
@@ -341,6 +348,7 @@ export function GuestPreview({ onSignIn }: Props) {
           }}
           onUpdate={() => signUp()}
           onDelete={() => signUp()}
+          teams={guestTeams}
         />
       )
     }

@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import { ChevronRight, BookOpen, Trophy } from 'lucide-react'
 import type { PracticeLog, GameRecord, Goal, PracticeType } from '../types'
 import { useLanguage } from '../contexts/LanguageContext'
 import { getProfile } from '../lib/profile'
+import { AthleteModal } from '../components/AthleteModal'
+import type { useCoachRelationships } from '../hooks/useCoachRelationships'
+import type { useTeams } from '../hooks/useTeams'
 
 interface Props {
   practiceLogs: PracticeLog[]
@@ -9,6 +13,8 @@ interface Props {
   goals: Goal[]
   latestNextChallenge: string
   onNavigate: (page: string) => void
+  coachRelationships: ReturnType<typeof useCoachRelationships>
+  teams: ReturnType<typeof useTeams>
 }
 
 function fmtDate(s: string) {
@@ -16,9 +22,10 @@ function fmtDate(s: string) {
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
-export function Dashboard({ practiceLogs, gameRecords, goals, latestNextChallenge, onNavigate }: Props) {
+export function Dashboard({ practiceLogs, gameRecords, goals, latestNextChallenge, onNavigate, coachRelationships, teams }: Props) {
   const { t, lang } = useLanguage()
   const { motto } = getProfile()
+  const [athleteModal, setAthleteModal] = useState<{ userId: string; name: string } | null>(null)
 
   const recent      = practiceLogs[0]
   const recentGame  = gameRecords[0]
@@ -34,8 +41,21 @@ export function Dashboard({ practiceLogs, gameRecords, goals, latestNextChalleng
     return s
   })()
 
+  const hasAthletes  = coachRelationships.myAthletes.length > 0
+  const isTeamCoach  = teams.myTeams.some(t => t.myRole === 'coach')
+  const hasCoachFB   = practiceLogs.some(l => l.coachFeedback && !l.coachFeedback.readAt) ||
+                       gameRecords.some(g => g.coachFeedback && !g.coachFeedback.readAt)
+
   return (
     <div className="space-y-4">
+      {athleteModal && (
+        <AthleteModal
+          athleteUserId={athleteModal.userId}
+          athleteName={athleteModal.name}
+          onClose={() => setAthleteModal(null)}
+        />
+      )}
+
       {/* ヘッダーバナー */}
       <div className="rounded-2xl p-5 relative overflow-hidden"
         style={{ backgroundColor: '#1E3A5F' }}>
@@ -208,6 +228,90 @@ export function Dashboard({ practiceLogs, gameRecords, goals, latestNextChalleng
               </div>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* コーチからのFB通知 */}
+      {hasCoachFB && (
+        <div
+          className="nb-card"
+          style={{ borderLeft: '3px solid #1E3A5F', cursor: 'pointer' }}
+          onClick={() => onNavigate('practice')}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E3A5F' }}>
+              🏀 {lang === 'ja' ? 'コーチからのFBがあります' : 'You have new coach feedback'}
+            </p>
+            <span style={{ fontSize: '0.78rem', color: '#E07B2A', fontWeight: 600 }}>
+              {lang === 'ja' ? '確認する →' : 'Review →'}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* 担当選手・チームコーチセクション */}
+      {(hasAthletes || isTeamCoach) && (
+        <section className="pb-2">
+          <h2 className="font-bold font-klee mb-2" style={{ color: '#1E3A5F' }}>
+            {lang === 'ja' ? '担当選手・チーム' : 'My Athletes & Teams'}
+          </h2>
+
+          {/* 個人担当選手 */}
+          {hasAthletes && (
+            <div className="nb-card mb-2">
+              <p style={{ fontSize: '0.72rem', color: '#A89F92', marginBottom: 8, fontWeight: 600 }}>
+                {lang === 'ja' ? '👤 個人担当' : '👤 Personal Athletes'}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {coachRelationships.myAthletes.map(cr => (
+                  <button
+                    key={cr.id}
+                    onClick={() => setAthleteModal({
+                      userId: cr.playerId,
+                      name: lang === 'ja' ? `選手 (${cr.playerId.slice(0, 6)})` : `Athlete (${cr.playerId.slice(0, 6)})`,
+                    })}
+                    style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '8px 10px', borderRadius: 10,
+                      background: 'rgba(195,175,148,0.15)', border: 'none', cursor: 'pointer',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.85rem', color: '#1E1A14', fontWeight: 500 }}>
+                      👤 {lang === 'ja' ? '選手' : 'Athlete'} ({cr.playerId.slice(0, 6)})
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: '#E07B2A' }}>→</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* チームコーチ */}
+          {isTeamCoach && (
+            <div className="nb-card">
+              <p style={{ fontSize: '0.72rem', color: '#A89F92', marginBottom: 8, fontWeight: 600 }}>
+                {lang === 'ja' ? '🏀 チームコーチ' : '🏀 Team Coach'}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {teams.myTeams.filter(t => t.myRole === 'coach').map(team => (
+                  <button
+                    key={team.id}
+                    onClick={() => onNavigate('formations')}
+                    style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '8px 10px', borderRadius: 10,
+                      background: 'rgba(195,175,148,0.15)', border: 'none', cursor: 'pointer',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.85rem', color: '#1E1A14', fontWeight: 500 }}>
+                      👑 {team.name}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: '#E07B2A' }}>→</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
     </div>

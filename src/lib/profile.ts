@@ -1,6 +1,7 @@
 export interface Profile {
   motto: string
   onboardingDone: boolean
+  mode?: 'individual' | 'team'
 }
 
 const KEY = 'bskt-profile'

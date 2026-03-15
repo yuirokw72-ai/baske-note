@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { Plus, Trash2, ChevronDown, ChevronUp, Star, BookOpen } from 'lucide-react'
-import type { PracticeLog, PracticeType, GoalAchievement, FormationNote, CoachFeedback, CourtType, PlayerPos, Formation, FormationCategory } from '../types'
+import type { PracticeLog, PracticeType, GoalAchievement, FormationNote, CoachFeedback, CourtType, PlayerPos, Formation, FormationCategory, TeamWithRole } from '../types'
 import { FormationDiagram } from '../components/FormationDiagram'
 import { useLanguage } from '../contexts/LanguageContext'
 
 interface Props {
   logs: PracticeLog[]
   latestNextChallenge: string
-  onAdd: (log: Omit<PracticeLog, 'id' | 'createdAt'>) => void
+  onAdd: (log: Omit<PracticeLog, 'id' | 'createdAt'>) => Promise<PracticeLog>
   onUpdate: (id: string, updates: Partial<PracticeLog>) => void
   onDelete: (id: string) => void
   onAddFormation: (f: Omit<Formation, 'id' | 'createdAt'>) => void
+  teams: { myTeams: TeamWithRole[]; shareRecord: (id: string, type: 'practice' | 'game', teamId: string) => Promise<void> }
 }
 
 // Stored as Japanese keys (matches saved data); display via t('pn.menu.' + key)
@@ -256,14 +257,15 @@ function FormationEditor({ formations, onChange }: {
 }
 
 // ===== CoachFeedbackSection =====
-function CoachFeedbackSection({ feedback, onSave, nextPhKey }: {
+function CoachFeedbackSection({ feedback, onSave, nextPhKey, readonly }: {
   feedback?: CoachFeedback
   onSave: (fb: CoachFeedback) => void
   nextPhKey: string
+  readonly?: boolean
 }) {
   const { lang, t } = useLanguage()
   const today = new Date().toISOString().split('T')[0]
-  const [editing, setEditing] = useState(!feedback)
+  const [editing, setEditing] = useState(!feedback && !readonly)
   const [goodPoints, setGoodPoints]           = useState(feedback?.goodPoints ?? '')
   const [improvements, setImprovements]       = useState(feedback?.improvements ?? '')
   const [nextInstruction, setNextInstruction] = useState(feedback?.nextInstruction ?? '')
@@ -275,7 +277,9 @@ function CoachFeedbackSection({ feedback, onSave, nextPhKey }: {
     setEditing(false)
   }
 
-  if (!editing && feedback) {
+  if (readonly && !feedback) return null
+
+  if ((!editing && feedback) || (readonly && feedback)) {
     return (
       <div className="nb-card-coach">
         <div className="flex items-center justify-between mb-3">
@@ -287,11 +291,13 @@ function CoachFeedbackSection({ feedback, onSave, nextPhKey }: {
               </p>
             )}
           </div>
-          <button onClick={() => setEditing(true)}
-            className="text-xs px-3 py-1 rounded-lg"
-            style={{ backgroundColor: 'rgba(30,58,95,0.1)', color: '#1E3A5F' }}>
-            {t('cf.edit')}
-          </button>
+          {!readonly && (
+            <button onClick={() => setEditing(true)}
+              className="text-xs px-3 py-1 rounded-lg"
+              style={{ backgroundColor: 'rgba(30,58,95,0.1)', color: '#1E3A5F' }}>
+              {t('cf.edit')}
+            </button>
+          )}
         </div>
         {feedback.goodPoints && (
           <div className="mb-2">
@@ -359,16 +365,19 @@ function CoachFeedbackSection({ feedback, onSave, nextPhKey }: {
 }
 
 // ===== PracticeForm =====
-function PracticeForm({ onSubmit, onCancel, latestNextChallenge, initialData }: {
+function PracticeForm({ onSubmit, onCancel, latestNextChallenge, initialData, myTeams, onSelectTeam }: {
   onSubmit: (log: Omit<PracticeLog, 'id' | 'createdAt'>) => void
   onCancel: () => void
   latestNextChallenge: string
   initialData?: PracticeLog
+  myTeams?: TeamWithRole[]
+  onSelectTeam?: (teamId: string | null) => void
 }) {
   const { t } = useLanguage()
   const isEditing = !!initialData
   const today = new Date().toISOString().split('T')[0]
   const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
 
   // Step1
   const [date, setDate]               = useState(initialData?.date ?? today)
@@ -494,6 +503,35 @@ function PracticeForm({ onSubmit, onCancel, latestNextChallenge, initialData }: 
             <ConditionPicker label={t('pn.cond')} value={condition} onChange={setCondition} items={condItems} />
             <ConditionPicker label={t('pn.motv')} value={motivation} onChange={setMotivation} items={motvItems} />
           </div>
+
+          {/* チーム共有（任意） */}
+          {!isEditing && myTeams && myTeams.length > 0 && (
+            <div className="nb-card-plain">
+              <p className="text-xs font-bold mb-2" style={{ color: '#1E3A5F' }}>{t('practice.shareWithTeam')}</p>
+              <div className="space-y-1">
+                <button onClick={() => { setSelectedTeamId(null); onSelectTeam?.(null) }}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm"
+                  style={{
+                    background: selectedTeamId === null ? 'rgba(30,58,95,0.1)' : 'transparent',
+                    color: selectedTeamId === null ? '#1E3A5F' : '#7A6E5F',
+                    fontWeight: selectedTeamId === null ? 600 : 400,
+                  }}>
+                  ○ {t('practice.sharePrivate')}
+                </button>
+                {myTeams.map(team => (
+                  <button key={team.id} onClick={() => { setSelectedTeamId(team.id); onSelectTeam?.(team.id) }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm"
+                    style={{
+                      background: selectedTeamId === team.id ? 'rgba(224,123,42,0.1)' : 'transparent',
+                      color: selectedTeamId === team.id ? '#E07B2A' : '#7A6E5F',
+                      fontWeight: selectedTeamId === team.id ? 600 : 400,
+                    }}>
+                    ● {team.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button onClick={() => setStep(2)} disabled={!todayGoal.trim()} className="btn-primary">
             {t('pn.next1')}
@@ -779,6 +817,7 @@ function PracticeDetail({ log, onBack, onDelete, onUpdate, onEdit }: {
         feedback={log.coachFeedback}
         onSave={fb => onUpdate({ coachFeedback: fb })}
         nextPhKey="cf.nextPh.practice"
+        readonly
       />
 
       <div className="flex gap-2">
@@ -798,12 +837,15 @@ function PracticeDetail({ log, onBack, onDelete, onUpdate, onEdit }: {
 }
 
 // ===== PracticeNote (main) =====
-export function PracticeNote({ logs, latestNextChallenge, onAdd, onUpdate, onDelete, onAddFormation }: Props) {
+export function PracticeNote({ logs, latestNextChallenge, onAdd, onUpdate, onDelete, onAddFormation, teams }: Props) {
   const { lang, t } = useLanguage()
   const [view, setView] = useState<'list' | 'form' | 'detail' | 'edit'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [pendingShareTeamId, setPendingShareTeamId] = useState<string | null>(null)
 
   const selectedLog = logs.find(l => l.id === selectedId)
+
+  const playerTeams = teams.myTeams.filter(t => t.myRole === 'player')
 
   if (view === 'form') return (
     <div className="page-enter">
@@ -813,7 +855,11 @@ export function PracticeNote({ logs, latestNextChallenge, onAdd, onUpdate, onDel
       </div>
       <PracticeForm
         onSubmit={log => {
-          onAdd(log)
+          onAdd(log).then(newLog => {
+            if (pendingShareTeamId) {
+              teams.shareRecord(newLog.id, 'practice', pendingShareTeamId).catch(console.error)
+            }
+          })
           // フォーメーションを作戦ボードに自動保存
           if (log.formations && log.formations.length > 0) {
             log.formations.forEach(f => {
@@ -833,6 +879,8 @@ export function PracticeNote({ logs, latestNextChallenge, onAdd, onUpdate, onDel
         }}
         onCancel={() => setView('list')}
         latestNextChallenge={latestNextChallenge}
+        myTeams={playerTeams}
+        onSelectTeam={setPendingShareTeamId}
       />
     </div>
   )

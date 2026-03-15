@@ -5,6 +5,50 @@ export interface CoachFeedback {
   nextInstruction: string
   coachName: string
   date: string
+  readAt?: string  // 選手が初めて開いた時刻
+}
+
+// ===== コーチ関係 =====
+export interface CoachRelationship {
+  id: string
+  playerId: string
+  coachId: string | null
+  token: string
+  status: 'pending' | 'accepted' | 'revoked'
+  coachName: string | null
+  createdAt: string
+  expiresAt: string
+  acceptedAt: string | null
+}
+
+// ===== チーム =====
+export interface Team {
+  id: string
+  name: string
+  createdBy: string
+  inviteToken: string
+  createdAt: string
+}
+
+export interface TeamMember {
+  id: string
+  teamId: string
+  userId: string
+  role: 'coach' | 'player'
+  joinedAt: string
+}
+
+export interface TeamWithRole extends Team {
+  myRole: 'coach' | 'player'
+  memberCount: number
+}
+
+export interface TeamSharedRecord {
+  recordId: string
+  recordType: 'practice' | 'game'
+  teamId: string
+  playerId: string
+  sharedAt: string
 }
 
 // ===== 練習ノート =====
