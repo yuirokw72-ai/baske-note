@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Plus, ChevronDown, ChevronUp, Trash2, CheckCircle2 } from 'lucide-react'
+import { TooltipWrapper } from '../components/Tooltip'
 import type { Goal, GoalType, GoalCategory } from '../types'
 import { useLanguage } from '../contexts/LanguageContext'
 
@@ -179,7 +180,7 @@ function GoalItem({ goal, onProgressChange, onComplete, onDelete }: {
 }
 
 export function GoalsPage({ goals, onAdd, onUpdate, onDelete }: Props) {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const [showForm, setShowForm]           = useState(false)
   const [showCompleted, setShowCompleted] = useState(false)
 
@@ -205,11 +206,18 @@ export function GoalsPage({ goals, onAdd, onUpdate, onDelete }: Props) {
             {t('goal.activeCount').replace('{n}', String(active.length)).replace('{m}', String(completed.length))}
           </p>
         </div>
-        <button onClick={() => setShowForm(true)}
-          className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold"
-          style={{ backgroundColor: '#E07B2A', color: 'white' }}>
-          <Plus size={14} /> {t('goal.add')}
-        </button>
+        <TooltipWrapper
+          tooltipKey="goals-add"
+          message={{ ja: '🎯 目標を設定してみよう！', en: '🎯 Set your first goal!' }}
+          lang={lang}
+          position="bottom"
+        >
+          <button onClick={() => setShowForm(true)}
+            className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold"
+            style={{ backgroundColor: '#E07B2A', color: 'white' }}>
+            <Plus size={14} /> {t('goal.add')}
+          </button>
+        </TooltipWrapper>
       </div>
 
       {active.length === 0 && completed.length === 0 ? (

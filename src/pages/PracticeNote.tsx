@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Plus, Trash2, ChevronDown, ChevronUp, Star, BookOpen } from 'lucide-react'
+import { TooltipWrapper } from '../components/Tooltip'
 import type { PracticeLog, PracticeType, GoalAchievement, FormationNote, CoachFeedback, CourtType, PlayerPos, Formation, FormationCategory, TeamWithRole } from '../types'
 import { FormationDiagram } from '../components/FormationDiagram'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -928,11 +929,18 @@ export function PracticeNote({ logs, latestNextChallenge, onAdd, onUpdate, onDel
             {t('pn.records').replace('{n}', String(logs.length))}
           </p>
         </div>
-        <button onClick={() => setView('form')}
-          className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold"
-          style={{ backgroundColor: '#E07B2A', color: 'white' }}>
-          <BookOpen size={14} /> {t('pn.write')}
-        </button>
+        <TooltipWrapper
+          tooltipKey="practice-add"
+          message={{ ja: '📓 タップして練習を記録！', en: '📓 Tap to log a practice!' }}
+          lang={lang}
+          position="bottom"
+        >
+          <button onClick={() => setView('form')}
+            className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold"
+            style={{ backgroundColor: '#E07B2A', color: 'white' }}>
+            <BookOpen size={14} /> {t('pn.write')}
+          </button>
+        </TooltipWrapper>
       </div>
 
       {logs.length === 0 ? (

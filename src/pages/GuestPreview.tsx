@@ -230,14 +230,130 @@ function getSampleFormations(lang: string): Formation[] {
 }
 
 type Page = 'home' | 'calendar' | 'practice' | 'game' | 'goals' | 'skills' | 'formations'
+type ViewMode = 'player' | 'coach'
 
 interface Props {
   onSignIn: () => void
 }
 
+// ===== コーチビューのモックデータ =====
+function CoachPreview({ lang, onSignUp }: { lang: string; onSignUp: () => void }) {
+  const athletes = lang === 'ja'
+    ? [
+        { name: '田中 翼', sessions: 3, lastPractice: '昨日 · チーム練習 120分', goal: '3ポイントシュートのフォームを安定させる', pending: true },
+        { name: '鈴木 陸', sessions: 2, lastPractice: '2日前 · 自主練 90分', goal: '左手のボールハンドリングを改善する', pending: false },
+        { name: '山田 蒼', sessions: 1, lastPractice: '5日前 · チーム練習 150分', goal: 'チームのピック&ロールの連携を高める', pending: true },
+      ]
+    : [
+        { name: 'T. Tanaka', sessions: 3, lastPractice: 'Yesterday · Team 120min', goal: 'Stabilize 3-point shooting form', pending: true },
+        { name: 'R. Suzuki', sessions: 2, lastPractice: '2 days ago · Solo 90min', goal: 'Improve left-hand ball handling', pending: false },
+        { name: 'A. Yamada', sessions: 1, lastPractice: '5 days ago · Team 150min', goal: 'Improve team pick-and-roll', pending: true },
+      ]
+
+  return (
+    <div style={{ paddingBottom: 8 }}>
+      {/* コーチヘッダー */}
+      <div style={{
+        backgroundColor: '#1E3A5F', borderRadius: 16, padding: '16px 18px',
+        marginBottom: 16, color: 'white',
+      }}>
+        <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>
+          {lang === 'ja' ? 'コーチダッシュボード' : 'Coach Dashboard'}
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ fontWeight: 800, fontSize: '1.1rem', fontFamily: "'Klee One', cursive" }}>
+              {lang === 'ja' ? 'チームA' : 'Team A'}
+            </p>
+            <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
+              👥 {lang === 'ja' ? `選手 ${athletes.length}名` : `${athletes.length} Athletes`}
+            </p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)' }}>
+              {lang === 'ja' ? 'フィードバック待ち' : 'Awaiting Feedback'}
+            </p>
+            <p style={{ fontSize: '1.6rem', fontWeight: 800, color: '#E07B2A', lineHeight: 1.2 }}>
+              {athletes.filter(a => a.pending).length}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 選手一覧 */}
+      <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E3A5F', marginBottom: 10 }}>
+        {lang === 'ja' ? '📋 選手の記録' : '📋 Athlete Records'}
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+        {athletes.map((a, i) => (
+          <div key={i} style={{
+            backgroundColor: 'white', borderRadius: 14, padding: '14px 16px',
+            boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+            border: a.pending ? '1px solid rgba(224,123,42,0.25)' : '1px solid rgba(195,175,148,0.3)',
+            cursor: 'pointer',
+          }} onClick={onSignUp}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+              <div>
+                <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#1E1A14' }}>{a.name}</span>
+                <span style={{
+                  marginLeft: 8, fontSize: '0.65rem', fontWeight: 600,
+                  padding: '2px 7px', borderRadius: 20,
+                  backgroundColor: '#1E3A5F18', color: '#1E3A5F',
+                }}>
+                  {lang === 'ja' ? `今週 ${a.sessions}回` : `${a.sessions}× this week`}
+                </span>
+              </div>
+              {a.pending && (
+                <span style={{
+                  fontSize: '0.63rem', fontWeight: 700,
+                  padding: '2px 8px', borderRadius: 20,
+                  backgroundColor: 'rgba(224,123,42,0.12)', color: '#E07B2A',
+                }}>
+                  {lang === 'ja' ? 'FB待ち' : 'Pending FB'}
+                </span>
+              )}
+            </div>
+            <p style={{ fontSize: '0.72rem', color: '#7A6E5F', marginBottom: 6 }}>🕐 {a.lastPractice}</p>
+            <p style={{ fontSize: '0.75rem', color: '#5A5248', lineHeight: 1.4 }}>
+              🎯 {a.goal}
+            </p>
+            {a.pending && (
+              <div style={{
+                marginTop: 10, padding: '8px 12px', borderRadius: 10,
+                backgroundColor: '#F5F0E8',
+                border: '1px dashed rgba(224,123,42,0.3)',
+              }}>
+                <p style={{ fontSize: '0.7rem', color: '#A89F92' }}>
+                  💬 {lang === 'ja' ? 'コーチコメントを追加…' : 'Add coach feedback…'}
+                </p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* CTAカード */}
+      <div style={{
+        backgroundColor: '#1E3A5F', borderRadius: 16, padding: '20px',
+        textAlign: 'center', cursor: 'pointer',
+      }} onClick={onSignUp}>
+        <p style={{ color: 'white', fontWeight: 700, fontSize: '0.92rem', marginBottom: 6 }}>
+          {lang === 'ja' ? '🏆 コーチとして参加する' : '🏆 Join as a Coach'}
+        </p>
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', lineHeight: 1.6 }}>
+          {lang === 'ja'
+            ? 'チームを作成して選手を招待。\nフィードバックで成長をサポートしましょう。'
+            : 'Create a team and invite athletes.\nSupport their growth with direct feedback.'}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export function GuestPreview({ onSignIn }: Props) {
   const { lang, setLang, t } = useLanguage()
   const [page, setPage] = useState<Page>('home')
+  const [viewMode, setViewMode] = useState<ViewMode>('player')
   const [showSignUpModal, setShowSignUpModal] = useState(false)
 
   const sampleLogs = getSampleLogs(lang)
@@ -411,10 +527,44 @@ export function GuestPreview({ onSignIn }: Props) {
         </div>
       </div>
 
-      {/* メインコンテンツ（バナー分の余白を追加） */}
-      <main className="flex-1 overflow-y-auto pb-20" style={{ paddingTop: '48px' }}>
-        <div key={page} className="max-w-md mx-auto px-4 pt-4 page-enter">
-          {renderContent()}
+      {/* 選手 / コーチ タブ */}
+      <div style={{
+        position: 'fixed', top: '48px', left: 0, right: 0, zIndex: 49,
+        backgroundColor: '#16305A',
+        padding: '6px 16px',
+        display: 'flex', gap: 6,
+      }}>
+        {(['player', 'coach'] as ViewMode[]).map(mode => {
+          const active = viewMode === mode
+          const label = mode === 'player'
+            ? (lang === 'ja' ? '🏃 選手モード' : '🏃 Player')
+            : (lang === 'ja' ? '📋 コーチモード' : '📋 Coach')
+          return (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              style={{
+                flex: 1, padding: '6px 0', borderRadius: 10,
+                fontSize: '0.75rem', fontWeight: 700,
+                backgroundColor: active ? '#E07B2A' : 'rgba(255,255,255,0.1)',
+                color: active ? 'white' : 'rgba(255,255,255,0.55)',
+                border: active ? 'none' : '1px solid rgba(255,255,255,0.15)',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* メインコンテンツ（バナー + タブ分の余白） */}
+      <main className="flex-1 overflow-y-auto pb-20" style={{ paddingTop: '88px' }}>
+        <div key={`${page}-${viewMode}`} className="max-w-md mx-auto px-4 pt-4 page-enter">
+          {viewMode === 'coach'
+            ? <CoachPreview lang={lang} onSignUp={() => setShowSignUpModal(true)} />
+            : renderContent()
+          }
         </div>
       </main>
 

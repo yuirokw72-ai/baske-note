@@ -16,6 +16,7 @@ import { Onboarding }     from './pages/Onboarding'
 import { LoginPage }      from './pages/Login'
 import { GuestPreview }  from './pages/GuestPreview'
 import { ModeSelect }     from './pages/ModeSelect'
+import { OnboardingCards, hasSeenFeatureTour } from './components/OnboardingCards'
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext'
 import { AuthProvider, useAuth }         from './contexts/AuthContext'
 import { getProfile } from './lib/profile'
@@ -49,6 +50,7 @@ function AppInner() {
   const [page, setPage] = useState<Page>('home')
   const [onboardingDone, setOnboardingDone] = useState(() => getProfile().onboardingDone)
   const [modeDone,       setModeDone]       = useState(() => !!getProfile().mode)
+  const [featureTourDone, setFeatureTourDone] = useState(() => hasSeenFeatureTour())
   const { user, loading: authLoading, signInWithGoogle } = useAuth()
   const store = useSupabaseStore(user?.id ?? '')
   const { lang, setLang, t } = useLanguage()
@@ -147,6 +149,11 @@ function AppInner() {
         <ModeSelect onComplete={() => setModeDone(true)} />
       </>
     )
+  }
+
+  // ===== 機能紹介カード（初回ログイン時のみ） =====
+  if (!featureTourDone) {
+    return <OnboardingCards lang={lang} onDone={() => setFeatureTourDone(true)} />
   }
 
   // ===== データ読み込み中 =====

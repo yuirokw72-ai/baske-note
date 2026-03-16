@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Trophy, Star } from 'lucide-react'
+import { TooltipWrapper } from '../components/Tooltip'
 import type { GameRecord, GameResult, QuarterNote, CoachFeedback, TeamWithRole } from '../types'
 import { useLanguage } from '../contexts/LanguageContext'
 
@@ -711,11 +712,18 @@ export function GameRecordPage({ records, onAdd, onUpdate, onDelete, teams }: Pr
               .replace('{l}', String(losses))}
           </p>
         </div>
-        <button onClick={() => setView('form')}
-          className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold"
-          style={{ backgroundColor: '#1E3A5F', color: 'white' }}>
-          <Trophy size={14} /> {t('gr.record')}
-        </button>
+        <TooltipWrapper
+          tooltipKey="game-add"
+          message={{ ja: '🏀 試合結果を記録しよう！', en: '🏀 Record your game result!' }}
+          lang={lang}
+          position="bottom"
+        >
+          <button onClick={() => setView('form')}
+            className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold"
+            style={{ backgroundColor: '#1E3A5F', color: 'white' }}>
+            <Trophy size={14} /> {t('gr.record')}
+          </button>
+        </TooltipWrapper>
       </div>
 
       {records.length === 0 ? (
