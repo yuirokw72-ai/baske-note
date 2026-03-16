@@ -559,7 +559,13 @@ export function GuestPreview({ onSignIn }: Props) {
       </div>
 
       {/* メインコンテンツ（バナー + タブ分の余白） */}
-      <main className="flex-1 overflow-y-auto pb-20" style={{ paddingTop: '88px' }}>
+      <main
+        className="flex-1 overflow-y-auto"
+        style={{
+          paddingTop: '88px',
+          paddingBottom: viewMode === 'coach' ? '16px' : '80px',
+        }}
+      >
         <div key={`${page}-${viewMode}`} className="max-w-md mx-auto px-4 pt-4 page-enter">
           {viewMode === 'coach'
             ? <CoachPreview lang={lang} onSignUp={() => setShowSignUpModal(true)} />
@@ -568,45 +574,47 @@ export function GuestPreview({ onSignIn }: Props) {
         </div>
       </main>
 
-      {/* ボトムナビ - ネイビー背景で見やすく */}
-      <nav
-        className="fixed bottom-0 left-0 right-0"
-        style={{
-          backgroundColor: '#1E3A5F',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 -2px 16px rgba(0,0,0,0.25)',
-        }}
-      >
-        <div className="max-w-md mx-auto flex">
-          {NAV_IDS.map(({ id, key, Icon }) => {
-            const active = page === id
-            return (
-              <button
-                key={id}
-                onClick={() => setPage(id)}
-                className="flex-1 flex flex-col items-center py-2 gap-0.5 transition-colors relative"
-                style={{ color: active ? '#E07B2A' : 'rgba(255,255,255,0.65)' }}
-              >
-                {active && (
-                  <div
-                    className="absolute top-0 left-1/2 -translate-x-1/2"
-                    style={{
-                      width: 24, height: 2.5,
-                      borderRadius: '0 0 3px 3px',
-                      background: 'linear-gradient(90deg, #E07B2A, #C4520D)',
-                      boxShadow: '0 0 6px rgba(224,123,42,0.5)',
-                    }}
-                  />
-                )}
-                <Icon size={18} strokeWidth={active ? 2.5 : 1.8} />
-                <span style={{ fontSize: '0.57rem', fontWeight: active ? 700 : 400 }}>
-                  {t(key)}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </nav>
+      {/* ボトムナビ - 選手モード時のみ表示 */}
+      {viewMode === 'player' && (
+        <nav
+          className="fixed bottom-0 left-0 right-0"
+          style={{
+            backgroundColor: '#1E3A5F',
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 -2px 16px rgba(0,0,0,0.25)',
+          }}
+        >
+          <div className="max-w-md mx-auto flex">
+            {NAV_IDS.map(({ id, key, Icon }) => {
+              const active = page === id
+              return (
+                <button
+                  key={id}
+                  onClick={() => setPage(id)}
+                  className="flex-1 flex flex-col items-center py-2 gap-0.5 transition-colors relative"
+                  style={{ color: active ? '#E07B2A' : 'rgba(255,255,255,0.65)' }}
+                >
+                  {active && (
+                    <div
+                      className="absolute top-0 left-1/2 -translate-x-1/2"
+                      style={{
+                        width: 24, height: 2.5,
+                        borderRadius: '0 0 3px 3px',
+                        background: 'linear-gradient(90deg, #E07B2A, #C4520D)',
+                        boxShadow: '0 0 6px rgba(224,123,42,0.5)',
+                      }}
+                    />
+                  )}
+                  <Icon size={18} strokeWidth={active ? 2.5 : 1.8} />
+                  <span style={{ fontSize: '0.57rem', fontWeight: active ? 700 : 400 }}>
+                    {t(key)}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </nav>
+      )}
 
       {/* サインアップモーダル */}
       {showSignUpModal && (
