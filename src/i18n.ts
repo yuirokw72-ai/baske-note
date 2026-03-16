@@ -112,7 +112,7 @@ export const translations: Record<Lang, Record<string, string>> = {
 
     // ===== Dashboard =====
     'dash.tagline':        '今日も一歩、成長しよう',
-    'dash.appTitle':       'バスケットボールノート',
+    'dash.appTitle':       'トレーニングノート',
     'dash.wd.0': '日', 'dash.wd.1': '月', 'dash.wd.2': '火', 'dash.wd.3': '水',
     'dash.wd.4': '木', 'dash.wd.5': '金', 'dash.wd.6': '土',
     'dash.stat.practice':  '練習回数',
@@ -731,7 +731,7 @@ export const translations: Record<Lang, Record<string, string>> = {
 
     // ===== Dashboard =====
     'dash.tagline':        'One step forward today',
-    'dash.appTitle':       'Basketball Note',
+    'dash.appTitle':       'Training Note',
     'dash.wd.0': 'Su', 'dash.wd.1': 'Mo', 'dash.wd.2': 'Tu', 'dash.wd.3': 'We',
     'dash.wd.4': 'Th', 'dash.wd.5': 'Fr', 'dash.wd.6': 'Sa',
     'dash.stat.practice':  'Sessions',

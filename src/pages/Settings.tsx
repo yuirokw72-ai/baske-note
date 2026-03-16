@@ -15,7 +15,10 @@ interface Props {
 
 export function SettingsPage({ onBack, coachRel, teams }: Props) {
   const { lang, setLang } = useLanguage()
-  const { user, signOut } = useAuth()
+  const { user, signOut, deleteAccount } = useAuth()
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const [motto, setMotto] = useState(() => getProfile().motto)
   const [saved, setSaved] = useState(false)
 
@@ -423,6 +426,90 @@ export function SettingsPage({ onBack, coachRel, teams }: Props) {
             >
               {lang === 'ja' ? 'ログアウト' : 'Sign Out'}
             </button>
+            <button
+              onClick={() => { setDeleteConfirmText(''); setShowDeleteConfirm(true) }}
+              className="w-full mt-2 py-2 rounded-xl text-xs font-semibold"
+              style={{
+                backgroundColor: 'transparent',
+                color: 'rgba(220,53,69,0.5)',
+                border: '1px solid rgba(220,53,69,0.15)',
+              }}
+            >
+              {lang === 'ja' ? 'アカウントを削除する' : 'Delete Account'}
+            </button>
+          </div>
+        )}
+
+        {/* アカウント削除確認モーダル */}
+        {showDeleteConfirm && (
+          <div
+            style={{
+              position: 'fixed', inset: 0, zIndex: 100,
+              backgroundColor: 'rgba(0,0,0,0.6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '24px',
+            }}
+            onClick={() => setShowDeleteConfirm(false)}
+          >
+            <div
+              style={{
+                backgroundColor: 'white', borderRadius: '20px',
+                padding: '24px', width: '100%', maxWidth: '340px',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <p style={{ fontSize: '1.25rem', marginBottom: '8px', textAlign: 'center' }}>⚠️</p>
+              <p style={{ fontWeight: 700, fontSize: '0.95rem', color: '#1E1A14', textAlign: 'center', marginBottom: '8px' }}>
+                {lang === 'ja' ? 'アカウントを削除しますか？' : 'Delete your account?'}
+              </p>
+              <p style={{ fontSize: '0.75rem', color: '#7A6E5F', textAlign: 'center', marginBottom: '20px', lineHeight: 1.6 }}>
+                {lang === 'ja'
+                  ? '全ての記録・データが完全に削除されます。この操作は取り消せません。'
+                  : 'All records and data will be permanently deleted. This cannot be undone.'}
+              </p>
+              <p style={{ fontSize: '0.75rem', color: '#1E1A14', marginBottom: '6px', fontWeight: 600 }}>
+                {lang === 'ja' ? '確認のため「削除する」と入力してください:' : 'Type "delete" to confirm:'}
+              </p>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={e => setDeleteConfirmText(e.target.value)}
+                placeholder={lang === 'ja' ? '削除する' : 'delete'}
+                style={{
+                  width: '100%', padding: '10px 12px', borderRadius: '10px',
+                  border: '1px solid rgba(220,53,69,0.3)', fontSize: '0.85rem',
+                  marginBottom: '16px', outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+              <button
+                disabled={deleting || (lang === 'ja' ? deleteConfirmText !== '削除する' : deleteConfirmText !== 'delete')}
+                onClick={async () => {
+                  setDeleting(true)
+                  try { await deleteAccount() } finally { setDeleting(false) }
+                }}
+                style={{
+                  width: '100%', padding: '12px', borderRadius: '12px',
+                  backgroundColor: (lang === 'ja' ? deleteConfirmText === '削除する' : deleteConfirmText === 'delete') && !deleting
+                    ? '#DC3545' : 'rgba(220,53,69,0.25)',
+                  color: 'white', fontWeight: 700, fontSize: '0.9rem', border: 'none',
+                  transition: 'background-color 0.2s',
+                  cursor: (lang === 'ja' ? deleteConfirmText === '削除する' : deleteConfirmText === 'delete') && !deleting ? 'pointer' : 'default',
+                }}
+              >
+                {deleting
+                  ? (lang === 'ja' ? '削除中...' : 'Deleting...')
+                  : (lang === 'ja' ? 'アカウントを削除する' : 'Delete Account')}
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                style={{
+                  width: '100%', padding: '10px', marginTop: '8px', borderRadius: '12px',
+                  backgroundColor: 'transparent', color: '#7A6E5F', fontSize: '0.85rem', border: 'none',
+                }}
+              >
+                {lang === 'ja' ? 'キャンセル' : 'Cancel'}
+              </button>
+            </div>
           </div>
         )}
 
