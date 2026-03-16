@@ -199,7 +199,7 @@ function AppInner() {
   const showNav = page !== 'settings'
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#E8E0D0' }}>
+    <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: '#E8E0D0' }}>
       <SpinningCursor />
 
       {/* 招待承認モーダル: コーチ招待 */}
@@ -340,7 +340,7 @@ function AppInner() {
         </button>
       </div>
 
-      <main className="flex-1 overflow-y-auto pb-20 nb-bg">
+      <main className="flex-1 overflow-y-auto nb-bg">
         {/* key={page} causes remount on tab switch → triggers .page-enter animation */}
         <div key={page} className="max-w-md mx-auto px-4 pt-6 page-enter">
           {content()}
@@ -350,8 +350,9 @@ function AppInner() {
       {/* Bottom Navigation — 設定画面では非表示 */}
       {showNav && (
         <nav
-          className="fixed bottom-0 left-0 right-0 safe-area-bottom"
+          className="safe-area-bottom"
           style={{
+            flexShrink: 0,
             backgroundColor: 'rgba(255,255,255,0.96)',
             borderTop: '1px solid rgba(195,175,148,0.4)',
             backdropFilter: 'blur(12px)',

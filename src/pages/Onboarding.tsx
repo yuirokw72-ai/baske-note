@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { saveProfile } from '../lib/profile'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 
 interface Props {
   onComplete: () => void
@@ -8,10 +10,20 @@ interface Props {
 
 export function Onboarding({ onComplete }: Props) {
   const { lang, setLang } = useLanguage()
+  const { user } = useAuth()
+  const [displayName, setDisplayName] = useState('')
   const [motto, setMotto] = useState('')
 
-  const handleStart = () => {
+  const handleStart = async () => {
     saveProfile({ motto: motto.trim(), onboardingDone: true })
+    // display_name を Supabase に保存
+    if (user && displayName.trim()) {
+      await supabase.from('user_profiles').upsert({
+        user_id: user.id,
+        display_name: displayName.trim(),
+        updated_at: new Date().toISOString(),
+      })
+    }
     onComplete()
   }
 
@@ -81,6 +93,41 @@ export function Onboarding({ onComplete }: Props) {
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', marginBottom: '36px', lineHeight: 1.6 }}>
           {lang === 'ja' ? '練習・試合・成長を記録するノート' : 'Track your practice, games & growth'}
         </p>
+
+        {/* Display Name card */}
+        <div style={{
+          backgroundColor: 'rgba(255,255,255,0.07)',
+          borderRadius: '16px',
+          padding: '24px 20px',
+          marginBottom: '16px',
+          border: '1px solid rgba(255,255,255,0.12)',
+          textAlign: 'left',
+        }}>
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', marginBottom: '4px', fontWeight: 600 }}>
+            {lang === 'ja' ? '👤 あなたの名前' : '👤 Your Name'}
+          </p>
+          <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.75rem', marginBottom: '14px', lineHeight: 1.5 }}>
+            {lang === 'ja'
+              ? 'コーチに表示される名前です。'
+              : 'This name is shown to your coach.'}
+          </p>
+          <input
+            value={displayName}
+            onChange={e => setDisplayName(e.target.value)}
+            placeholder={lang === 'ja' ? '例）田中 太郎（空欄でもOK）' : 'e.g. John Smith (optional)'}
+            style={{
+              width: '100%',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              borderRadius: '10px',
+              color: 'rgba(255,255,255,0.9)',
+              fontSize: '0.95rem',
+              padding: '10px 12px',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
 
         {/* Motto card */}
         <div style={{

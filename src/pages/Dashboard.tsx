@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronRight, BookOpen, Trophy } from 'lucide-react'
 import type { PracticeLog, GameRecord, Goal, PracticeType } from '../types'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -6,6 +6,7 @@ import { getProfile } from '../lib/profile'
 import { AthleteModal } from '../components/AthleteModal'
 import type { useCoachRelationships } from '../hooks/useCoachRelationships'
 import type { useTeams } from '../hooks/useTeams'
+import { supabase } from '../lib/supabase'
 
 interface Props {
   practiceLogs: PracticeLog[]
@@ -26,6 +27,23 @@ export function Dashboard({ practiceLogs, gameRecords, goals, latestNextChalleng
   const { t, lang } = useLanguage()
   const { motto } = getProfile()
   const [athleteModal, setAthleteModal] = useState<{ userId: string; name: string } | null>(null)
+  // 選手名キャッシュ: userId → display_name
+  const [athleteNames, setAthleteNames] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const ids = coachRelationships.myAthletes.map(cr => cr.playerId)
+    if (ids.length === 0) return
+    supabase
+      .from('user_profiles')
+      .select('user_id, display_name')
+      .in('user_id', ids)
+      .then(({ data }) => {
+        if (!data) return
+        const map: Record<string, string> = {}
+        data.forEach(r => { map[r.user_id] = r.display_name })
+        setAthleteNames(map)
+      })
+  }, [coachRelationships.myAthletes])
 
   const recent      = practiceLogs[0]
   const recentGame  = gameRecords[0]
@@ -263,25 +281,26 @@ export function Dashboard({ practiceLogs, gameRecords, goals, latestNextChalleng
                 {lang === 'ja' ? '👤 個人担当' : '👤 Personal Athletes'}
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {coachRelationships.myAthletes.map(cr => (
-                  <button
-                    key={cr.id}
-                    onClick={() => setAthleteModal({
-                      userId: cr.playerId,
-                      name: lang === 'ja' ? `選手 (${cr.playerId.slice(0, 6)})` : `Athlete (${cr.playerId.slice(0, 6)})`,
-                    })}
-                    style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      padding: '8px 10px', borderRadius: 10,
-                      background: 'rgba(195,175,148,0.15)', border: 'none', cursor: 'pointer',
-                    }}
-                  >
-                    <span style={{ fontSize: '0.85rem', color: '#1E1A14', fontWeight: 500 }}>
-                      👤 {lang === 'ja' ? '選手' : 'Athlete'} ({cr.playerId.slice(0, 6)})
-                    </span>
-                    <span style={{ fontSize: '0.75rem', color: '#E07B2A' }}>→</span>
-                  </button>
-                ))}
+                {coachRelationships.myAthletes.map(cr => {
+                  const displayName = athleteNames[cr.playerId] ||
+                    (lang === 'ja' ? `選手 (${cr.playerId.slice(0, 6)})` : `Athlete (${cr.playerId.slice(0, 6)})`)
+                  return (
+                    <button
+                      key={cr.id}
+                      onClick={() => setAthleteModal({ userId: cr.playerId, name: displayName })}
+                      style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '8px 10px', borderRadius: 10,
+                        background: 'rgba(195,175,148,0.15)', border: 'none', cursor: 'pointer',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.85rem', color: '#1E1A14', fontWeight: 500 }}>
+                        👤 {displayName}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#E07B2A' }}>→</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
