@@ -13,33 +13,28 @@ function toYMD(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function fmtDate(dateStr: string, lang: string) {
-  const d = new Date(dateStr)
-  if (lang === 'en') {
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  }
-  return `${d.getMonth() + 1}月${d.getDate()}日`
+function fmtDate(dateStr: string, locale: string) {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
 }
 
-function fmtYearMonth(year: number, month: number, lang: string) {
-  if (lang === 'en') {
-    const d = new Date(year, month, 1)
-    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
-  }
-  return `${year}年${month + 1}月`
+function fmtYearMonth(year: number, month: number, locale: string) {
+  const d = new Date(year, month, 1)
+  return d.toLocaleDateString(locale, { year: 'numeric', month: 'long' })
 }
 
-function buildCalendar(year: number, month: number) {
+function buildCalendar(year: number, month: number, weekStartsOn: 0 | 1) {
   const first = new Date(year, month, 1)
   const last  = new Date(year, month + 1, 0)
-  const cells: (Date | null)[] = Array(first.getDay()).fill(null)
+  const offset = (first.getDay() - weekStartsOn + 7) % 7
+  const cells: (Date | null)[] = Array(offset).fill(null)
   for (let d = 1; d <= last.getDate(); d++) cells.push(new Date(year, month, d))
   while (cells.length % 7 !== 0) cells.push(null)
   return cells
 }
 
 export function CalendarPage({ practiceLogs, gameRecords, onNavigate }: Props) {
-  const { lang, t } = useLanguage()
+  const { locale, weekStartsOn, t } = useLanguage()
   const today = new Date()
   const [year, setYear]   = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
@@ -56,13 +51,14 @@ export function CalendarPage({ practiceLogs, gameRecords, onNavigate }: Props) {
 
   const practiceSet = new Set(practiceLogs.map(l => l.date))
   const gameSet     = new Set(gameRecords.map(r => r.date))
-  const cells = buildCalendar(year, month)
+  const cells = buildCalendar(year, month, weekStartsOn)
   const todayStr = toYMD(today)
 
   const selectedPractices = selected ? practiceLogs.filter(l => l.date === selected) : []
   const selectedGames     = selected ? gameRecords.filter(r => r.date === selected) : []
 
-  const WEEKDAYS = [0,1,2,3,4,5,6].map(i => t(`cal.wd.${i}`))
+  // 曜日ヘッダー: weekStartsOn に合わせて並べる
+  const WEEKDAYS = [0,1,2,3,4,5,6].map(i => t(`cal.wd.${(i + weekStartsOn) % 7}`))
 
   return (
     <div>
@@ -75,7 +71,7 @@ export function CalendarPage({ practiceLogs, gameRecords, onNavigate }: Props) {
             <ChevronLeft size={18} style={{ color: '#7A6E5F' }} />
           </button>
           <span className="font-bold text-sm" style={{ color: '#1E1A14', minWidth: '80px', textAlign: 'center' }}>
-            {fmtYearMonth(year, month, lang)}
+            {fmtYearMonth(year, month, locale)}
           </span>
           <button onClick={nextMonth} className="p-1.5 rounded-lg"
             style={{ backgroundColor: 'rgba(195,175,148,0.2)', border: '1px solid rgba(195,175,148,0.5)' }}>
@@ -100,12 +96,15 @@ export function CalendarPage({ practiceLogs, gameRecords, onNavigate }: Props) {
       <div className="nb-card-plain mb-4">
         {/* 曜日ヘッダー */}
         <div className="grid grid-cols-7 mb-1">
-          {WEEKDAYS.map((d, i) => (
-            <div key={i} className="text-center py-1 text-xs font-semibold"
-                 style={{ color: i === 0 ? '#DC3545' : i === 6 ? '#1E3A5F' : '#A89F92' }}>
-              {d}
-            </div>
-          ))}
+          {WEEKDAYS.map((d, i) => {
+            const dayOfWeek = (i + weekStartsOn) % 7
+            return (
+              <div key={i} className="text-center py-1 text-xs font-semibold"
+                   style={{ color: dayOfWeek === 0 ? '#DC3545' : dayOfWeek === 6 ? '#1E3A5F' : '#A89F92' }}>
+                {d}
+              </div>
+            )
+          })}
         </div>
 
         {/* 日付グリッド */}
@@ -151,7 +150,7 @@ export function CalendarPage({ practiceLogs, gameRecords, onNavigate }: Props) {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold font-klee" style={{ color: '#1E3A5F' }}>
-              {fmtDate(selected, lang)}
+              {fmtDate(selected, locale)}
             </h2>
             <div className="flex gap-2">
               <button

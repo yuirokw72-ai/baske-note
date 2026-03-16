@@ -53,7 +53,7 @@ function AppInner() {
   const [featureTourDone, setFeatureTourDone] = useState(() => hasSeenFeatureTour())
   const { user, loading: authLoading, signInWithGoogle } = useAuth()
   const store = useSupabaseStore(user?.id ?? '')
-  const { lang, setLang, t } = useLanguage()
+  const { lang, t } = useLanguage()
 
   // コーチ・チームフック（ログイン済みのみ）
   const coachRel = useCoachRelationships(user?.id ?? null)
@@ -314,7 +314,7 @@ function AppInner() {
         </div>
       )}
 
-      {/* 設定アイコン + 言語切り替え */}
+      {/* 設定アイコン */}
       <div className="fixed top-3 right-3 z-40 flex items-center gap-1.5">
         <button
           onClick={() => setPage(page === 'settings' ? 'home' : 'settings')}
@@ -326,17 +326,6 @@ function AppInner() {
           }}
         >
           <Settings size={14} />
-        </button>
-        <button
-          onClick={() => setLang(lang === 'ja' ? 'en' : 'ja')}
-          className="px-2.5 py-1 rounded-full text-xs font-bold"
-          style={{
-            backgroundColor: 'rgba(195,175,148,0.35)',
-            color: '#7A6E5F',
-            border: '1px solid rgba(195,175,148,0.6)',
-          }}
-        >
-          {lang === 'ja' ? 'EN' : 'JA'}
         </button>
       </div>
 
