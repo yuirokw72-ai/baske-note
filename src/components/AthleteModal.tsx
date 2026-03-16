@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useCoachStore } from '../hooks/useCoachStore'
 import type { CoachFeedback, PracticeLog, GameRecord } from '../types'
@@ -14,6 +14,27 @@ function fmtDate(s: string) {
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
+// ===== MyMemory 翻訳 API (無料・APIキー不要) =====
+async function translateOne(text: string, to: string): Promise<string> {
+  if (!text.trim()) return text
+  try {
+    const res = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=auto|${to}`
+    )
+    const json = await res.json()
+    return (json.responseData?.translatedText as string) ?? text
+  } catch {
+    return text
+  }
+}
+
+async function translateBatch(fields: Record<string, string>, to: string): Promise<Record<string, string>> {
+  const entries = Object.entries(fields).filter(([, v]) => v.trim())
+  const results = await Promise.all(entries.map(([k, v]) => translateOne(v, to).then(t => [k, t] as [string, string])))
+  return Object.fromEntries(results)
+}
+
+// ===== FBフォーム =====
 interface FBFormProps {
   initial?: CoachFeedback
   recordType: 'practice' | 'game'
@@ -104,8 +125,11 @@ function FBForm({ initial, recordType, onSave, onCancel, lang }: FBFormProps) {
   )
 }
 
-// 練習ノートの詳細表示
-function PracticeDetail({ pl, lang }: { pl: PracticeLog; lang: string }) {
+// ===== 練習ノートの詳細表示 =====
+type Translated = Record<string, string>
+
+function PracticeDetail({ pl, lang, tr }: { pl: PracticeLog; lang: string; tr?: Translated }) {
+  const get = (key: string, val: string | undefined) => tr?.[key] ?? val ?? ''
   const achieveColor = pl.goalAchievement === 'achieved' ? '#2E7D52' : pl.goalAchievement === 'partial' ? '#E07B2A' : '#DC3545'
   const achieveLabel = pl.goalAchievement === 'achieved'
     ? (lang === 'ja' ? '○ 達成' : '○ Achieved')
@@ -113,23 +137,23 @@ function PracticeDetail({ pl, lang }: { pl: PracticeLog; lang: string }) {
     ? (lang === 'ja' ? '△ 一部達成' : '△ Partial')
     : (lang === 'ja' ? '× 未達成' : '× Not achieved')
 
-  const rows: { label: string; value: string | number | undefined; color?: string }[] = [
-    { label: lang === 'ja' ? '目標' : 'Goal', value: pl.todayGoal },
-    { label: lang === 'ja' ? '達成度' : 'Achievement', value: achieveLabel, color: achieveColor },
-    ...(pl.achievementReason ? [{ label: lang === 'ja' ? '達成理由' : 'Reason', value: pl.achievementReason }] : []),
-    ...(pl.menus && pl.menus.length > 0 ? [{ label: lang === 'ja' ? '練習メニュー' : 'Menus', value: pl.menus.join(' / ') }] : []),
-    ...(pl.didWell ? [{ label: lang === 'ja' ? 'できたこと' : 'Did Well', value: pl.didWell, color: '#2E7D52' }] : []),
-    ...(pl.struggled ? [{ label: lang === 'ja' ? 'できなかったこと' : 'Struggled', value: pl.struggled, color: '#DC3545' }] : []),
-    ...(pl.todayLearning ? [{ label: lang === 'ja' ? '本日の学び' : "Today's Learning", value: pl.todayLearning }] : []),
-    ...(pl.nextChallenge ? [{ label: lang === 'ja' ? '次の課題' : 'Next Challenge', value: pl.nextChallenge, color: '#1E3A5F' }] : []),
-    { label: lang === 'ja' ? '自己評価' : 'Self Rating', value: `${'★'.repeat(pl.selfRating)}${'☆'.repeat(5 - pl.selfRating)} (${pl.selfRating}/5)` },
+  const rows: { label: string; value: string; color?: string }[] = [
+    { label: lang === 'ja' ? '目標' : 'Goal',                    value: get('todayGoal', pl.todayGoal) },
+    { label: lang === 'ja' ? '達成度' : 'Achievement',           value: achieveLabel, color: achieveColor },
+    ...(pl.achievementReason ? [{ label: lang === 'ja' ? '達成理由' : 'Reason',     value: get('achievementReason', pl.achievementReason) }] : []),
+    ...(pl.menus?.length    ? [{ label: lang === 'ja' ? '練習メニュー' : 'Menus',   value: get('menus', pl.menus.join(' / ')) }] : []),
+    ...(pl.didWell          ? [{ label: lang === 'ja' ? 'できたこと' : 'Did Well',  value: get('didWell', pl.didWell),       color: '#2E7D52' }] : []),
+    ...(pl.struggled        ? [{ label: lang === 'ja' ? 'できなかったこと' : 'Struggled', value: get('struggled', pl.struggled), color: '#DC3545' }] : []),
+    ...(pl.todayLearning    ? [{ label: lang === 'ja' ? '本日の学び' : "Today's Learning", value: get('todayLearning', pl.todayLearning) }] : []),
+    ...(pl.nextChallenge    ? [{ label: lang === 'ja' ? '次の課題' : 'Next Challenge',     value: get('nextChallenge', pl.nextChallenge), color: '#1E3A5F' }] : []),
+    { label: lang === 'ja' ? '自己評価' : 'Self Rating',   value: `${'★'.repeat(pl.selfRating)}${'☆'.repeat(5 - pl.selfRating)} (${pl.selfRating}/5)` },
     { label: lang === 'ja' ? 'コンディション' : 'Condition', value: `${pl.condition}/5` },
-    { label: lang === 'ja' ? 'モチベ' : 'Motivation', value: `${pl.motivation}/5` },
+    { label: lang === 'ja' ? 'モチベ' : 'Motivation',      value: `${pl.motivation}/5` },
   ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {rows.map(r => r.value !== undefined && r.value !== '' ? (
+      {rows.map(r => r.value ? (
         <div key={r.label}>
           <p style={{ fontSize: '0.68rem', color: '#A89F92', marginBottom: 1 }}>{r.label}</p>
           <p style={{ fontSize: '0.82rem', color: r.color ?? '#1E1A14', lineHeight: 1.5 }}>{r.value}</p>
@@ -139,8 +163,9 @@ function PracticeDetail({ pl, lang }: { pl: PracticeLog; lang: string }) {
   )
 }
 
-// 試合記録の詳細表示
-function GameDetail({ gr, lang }: { gr: GameRecord; lang: string }) {
+// ===== 試合記録の詳細表示 =====
+function GameDetail({ gr, lang, tr }: { gr: GameRecord; lang: string; tr?: Translated }) {
+  const get = (key: string, val: string | undefined) => tr?.[key] ?? val ?? ''
   const fgPct = gr.fgAttempts > 0 ? Math.round((gr.fgMade / gr.fgAttempts) * 100) : 0
 
   return (
@@ -174,22 +199,26 @@ function GameDetail({ gr, lang }: { gr: GameRecord; lang: string }) {
 
       {/* 振り返り */}
       {[
-        { label: lang === 'ja' ? 'できたプレー' : 'Good Plays', value: gr.goodPlays, color: '#2E7D52' },
-        { label: lang === 'ja' ? '改善したいプレー' : 'Bad Plays', value: gr.badPlays, color: '#DC3545' },
-        { label: lang === 'ja' ? 'チーム分析' : 'Team Analysis', value: gr.teamAnalysis },
-        { label: lang === 'ja' ? '次試合への課題' : 'Next Game Focus', value: gr.nextGameFocus, color: '#1E3A5F' },
-        { label: lang === 'ja' ? 'メンタル振り返り' : 'Mental Reflection', value: gr.mentalReflection },
-        { label: lang === 'ja' ? '自己評価' : 'Self Rating', value: `${'★'.repeat(gr.selfRating)}${'☆'.repeat(5 - gr.selfRating)} (${gr.selfRating}/5)` },
-      ].map(r => r.value ? (
-        <div key={r.label}>
-          <p style={{ fontSize: '0.68rem', color: '#A89F92', marginBottom: 1 }}>{r.label}</p>
-          <p style={{ fontSize: '0.82rem', color: r.color ?? '#1E1A14', lineHeight: 1.5 }}>{r.value}</p>
-        </div>
-      ) : null)}
+        { label: lang === 'ja' ? 'できたプレー' : 'Good Plays',          key: 'goodPlays',       value: gr.goodPlays,       color: '#2E7D52' },
+        { label: lang === 'ja' ? '改善したいプレー' : 'Bad Plays',       key: 'badPlays',        value: gr.badPlays,        color: '#DC3545' },
+        { label: lang === 'ja' ? 'チーム分析' : 'Team Analysis',         key: 'teamAnalysis',    value: gr.teamAnalysis },
+        { label: lang === 'ja' ? '次試合への課題' : 'Next Game Focus',   key: 'nextGameFocus',   value: gr.nextGameFocus,   color: '#1E3A5F' },
+        { label: lang === 'ja' ? 'メンタル振り返り' : 'Mental',         key: 'mentalReflection', value: gr.mentalReflection },
+        { label: lang === 'ja' ? '自己評価' : 'Self Rating',             key: '_rating',          value: `${'★'.repeat(gr.selfRating)}${'☆'.repeat(5 - gr.selfRating)} (${gr.selfRating}/5)` },
+      ].map(r => {
+        const display = r.key === '_rating' ? r.value : get(r.key, r.value)
+        return display ? (
+          <div key={r.label}>
+            <p style={{ fontSize: '0.68rem', color: '#A89F92', marginBottom: 1 }}>{r.label}</p>
+            <p style={{ fontSize: '0.82rem', color: r.color ?? '#1E1A14', lineHeight: 1.5 }}>{display}</p>
+          </div>
+        ) : null
+      })}
     </div>
   )
 }
 
+// ===== メインコンポーネント =====
 type RecordTab = 'practice' | 'game'
 
 export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
@@ -198,6 +227,13 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
   const [tab,       setTab]       = useState<RecordTab>('practice')
   const [editId,    setEditId]    = useState<string | null>(null)
   const [expandId,  setExpandId]  = useState<string | null>(null)
+
+  // 翻訳キャッシュ: recordId → { fieldKey: translatedText }
+  const [translations, setTranslations] = useState<Record<string, Translated>>({})
+  // 翻訳中のrecordId
+  const [translating, setTranslating] = useState<Record<string, boolean>>({})
+  // 翻訳表示中か（原文表示 toggle）: recordId → boolean
+  const [showTranslated, setShowTranslated] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     fetchAthleteRecords(athleteUserId)
@@ -214,6 +250,45 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
     )
     setEditId(null)
   }
+
+  // 翻訳実行
+  const handleTranslate = useCallback(async (rec: PracticeLog | GameRecord) => {
+    const id = rec.id
+    const targetLang = lang // コーチの言語に翻訳
+
+    // 既にキャッシュある場合はトグルするだけ
+    if (translations[id]) {
+      setShowTranslated(prev => ({ ...prev, [id]: !prev[id] }))
+      return
+    }
+
+    setTranslating(prev => ({ ...prev, [id]: true }))
+
+    let fields: Record<string, string> = {}
+
+    if (tab === 'practice') {
+      const pl = rec as PracticeLog
+      if (pl.todayGoal)        fields.todayGoal        = pl.todayGoal
+      if (pl.achievementReason) fields.achievementReason = pl.achievementReason
+      if (pl.menus?.length)    fields.menus            = pl.menus.join(' / ')
+      if (pl.didWell)          fields.didWell          = pl.didWell
+      if (pl.struggled)        fields.struggled        = pl.struggled
+      if (pl.todayLearning)    fields.todayLearning    = pl.todayLearning
+      if (pl.nextChallenge)    fields.nextChallenge    = pl.nextChallenge
+    } else {
+      const gr = rec as GameRecord
+      if (gr.goodPlays)        fields.goodPlays        = gr.goodPlays
+      if (gr.badPlays)         fields.badPlays         = gr.badPlays
+      if (gr.teamAnalysis)     fields.teamAnalysis     = gr.teamAnalysis
+      if (gr.nextGameFocus)    fields.nextGameFocus    = gr.nextGameFocus
+      if (gr.mentalReflection) fields.mentalReflection = gr.mentalReflection
+    }
+
+    const translated = await translateBatch(fields, targetLang)
+    setTranslations(prev => ({ ...prev, [id]: translated }))
+    setShowTranslated(prev => ({ ...prev, [id]: true }))
+    setTranslating(prev => ({ ...prev, [id]: false }))
+  }, [lang, tab, translations])
 
   return (
     <div style={{
@@ -273,8 +348,11 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
               const pl = rec as PracticeLog
               const gr = rec as GameRecord
               const fb = rec.coachFeedback
-              const isEditing  = editId   === rec.id
-              const isExpanded = expandId === rec.id
+              const isEditing   = editId   === rec.id
+              const isExpanded  = expandId === rec.id
+              const isTranslating = !!translating[rec.id]
+              const translated    = showTranslated[rec.id] ? translations[rec.id] : undefined
+              const hasTranslation = !!translations[rec.id]
 
               return (
                 <div key={rec.id} style={{
@@ -297,11 +375,10 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
                           </span>
                         )}
                       </p>
-                      {/* 練習: 目標 + 達成度 */}
                       {isPractice && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <p style={{ fontSize: '0.88rem', fontWeight: 600, color: '#1E1A14', margin: 0 }}>
-                            {pl.todayGoal}
+                            {translated?.todayGoal ?? pl.todayGoal}
                           </p>
                           <span style={{
                             fontSize: '0.75rem', fontWeight: 700,
@@ -311,7 +388,6 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
                           </span>
                         </div>
                       )}
-                      {/* 試合: スコア */}
                       {!isPractice && (
                         <p style={{ fontSize: '0.88rem', fontWeight: 600, color: '#1E1A14', margin: 0 }}>
                           {(gr.result === 'win' ? '🏆' : gr.result === 'lose' ? '💔' : '🤝')} {gr.myScore}–{gr.opponentScore}
@@ -326,7 +402,6 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
                     </div>
 
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginLeft: 8 }}>
-                      {/* 詳細展開ボタン */}
                       {!isEditing && (
                         <button
                           onClick={() => setExpandId(isExpanded ? null : rec.id)}
@@ -340,7 +415,6 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
                           {isExpanded ? (lang === 'ja' ? '閉じる' : 'Close') : (lang === 'ja' ? '詳細' : 'Detail')}
                         </button>
                       )}
-                      {/* FB追加/編集ボタン */}
                       {!isEditing && (
                         <button
                           onClick={() => { setEditId(rec.id); setExpandId(null) }}
@@ -365,14 +439,56 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
                       borderTop: '1px solid rgba(195,175,148,0.35)',
                       paddingTop: 10, marginTop: 4,
                     }}>
+                      {/* 翻訳ボタン */}
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                        <button
+                          onClick={() => handleTranslate(rec)}
+                          disabled={isTranslating}
+                          style={{
+                            padding: '4px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                            background: hasTranslation && showTranslated[rec.id]
+                              ? 'rgba(30,58,95,0.15)'
+                              : 'rgba(30,58,95,0.08)',
+                            color: '#1E3A5F',
+                            fontSize: '0.72rem', fontWeight: 600,
+                            display: 'flex', alignItems: 'center', gap: 4,
+                          }}
+                        >
+                          {isTranslating
+                            ? (lang === 'ja' ? '翻訳中…' : 'Translating…')
+                            : hasTranslation && showTranslated[rec.id]
+                              ? (lang === 'ja' ? '🌐 翻訳表示中' : '🌐 Translated')
+                              : (lang === 'ja' ? '🌐 翻訳して表示' : '🌐 Translate')}
+                        </button>
+                        {hasTranslation && showTranslated[rec.id] && (
+                          <button
+                            onClick={() => setShowTranslated(prev => ({ ...prev, [rec.id]: false }))}
+                            style={{
+                              padding: '4px 10px', borderRadius: 8,
+                              border: '1px solid rgba(195,175,148,0.4)',
+                              background: 'transparent', color: '#A89F92',
+                              fontSize: '0.68rem', cursor: 'pointer',
+                            }}
+                          >
+                            {lang === 'ja' ? '原文に戻す' : 'Show Original'}
+                          </button>
+                        )}
+                        {/* 翻訳中ステータス表示 */}
+                        {isTranslating && (
+                          <p style={{ fontSize: '0.68rem', color: '#A89F92', alignSelf: 'center' }}>
+                            {lang === 'ja' ? 'MyMemory API で翻訳中…' : 'Translating via MyMemory…'}
+                          </p>
+                        )}
+                      </div>
+
                       {isPractice
-                        ? <PracticeDetail pl={pl} lang={lang} />
-                        : <GameDetail gr={gr} lang={lang} />
+                        ? <PracticeDetail pl={pl} lang={lang} tr={translated} />
+                        : <GameDetail gr={gr} lang={lang} tr={translated} />
                       }
                     </div>
                   )}
 
-                  {/* 既存FB表示 */}
+                  {/* 既存FB表示（詳細閉じ時） */}
                   {fb && !isEditing && !isExpanded && (
                     <div style={{
                       background: 'rgba(30,58,95,0.05)',
@@ -388,7 +504,7 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
                     </div>
                   )}
 
-                  {/* 詳細展開中のFB表示（折りたたみ付き） */}
+                  {/* FB表示（詳細展開時） */}
                   {fb && !isEditing && isExpanded && (
                     <div style={{
                       borderTop: '1px solid rgba(195,175,148,0.35)',
