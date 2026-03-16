@@ -104,13 +104,100 @@ function FBForm({ initial, recordType, onSave, onCancel, lang }: FBFormProps) {
   )
 }
 
+// 練習ノートの詳細表示
+function PracticeDetail({ pl, lang }: { pl: PracticeLog; lang: string }) {
+  const achieveColor = pl.goalAchievement === 'achieved' ? '#2E7D52' : pl.goalAchievement === 'partial' ? '#E07B2A' : '#DC3545'
+  const achieveLabel = pl.goalAchievement === 'achieved'
+    ? (lang === 'ja' ? '○ 達成' : '○ Achieved')
+    : pl.goalAchievement === 'partial'
+    ? (lang === 'ja' ? '△ 一部達成' : '△ Partial')
+    : (lang === 'ja' ? '× 未達成' : '× Not achieved')
+
+  const rows: { label: string; value: string | number | undefined; color?: string }[] = [
+    { label: lang === 'ja' ? '目標' : 'Goal', value: pl.todayGoal },
+    { label: lang === 'ja' ? '達成度' : 'Achievement', value: achieveLabel, color: achieveColor },
+    ...(pl.achievementReason ? [{ label: lang === 'ja' ? '達成理由' : 'Reason', value: pl.achievementReason }] : []),
+    ...(pl.menus && pl.menus.length > 0 ? [{ label: lang === 'ja' ? '練習メニュー' : 'Menus', value: pl.menus.join(' / ') }] : []),
+    ...(pl.didWell ? [{ label: lang === 'ja' ? 'できたこと' : 'Did Well', value: pl.didWell, color: '#2E7D52' }] : []),
+    ...(pl.struggled ? [{ label: lang === 'ja' ? 'できなかったこと' : 'Struggled', value: pl.struggled, color: '#DC3545' }] : []),
+    ...(pl.todayLearning ? [{ label: lang === 'ja' ? '本日の学び' : "Today's Learning", value: pl.todayLearning }] : []),
+    ...(pl.nextChallenge ? [{ label: lang === 'ja' ? '次の課題' : 'Next Challenge', value: pl.nextChallenge, color: '#1E3A5F' }] : []),
+    { label: lang === 'ja' ? '自己評価' : 'Self Rating', value: `${'★'.repeat(pl.selfRating)}${'☆'.repeat(5 - pl.selfRating)} (${pl.selfRating}/5)` },
+    { label: lang === 'ja' ? 'コンディション' : 'Condition', value: `${pl.condition}/5` },
+    { label: lang === 'ja' ? 'モチベ' : 'Motivation', value: `${pl.motivation}/5` },
+  ]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {rows.map(r => r.value !== undefined && r.value !== '' ? (
+        <div key={r.label}>
+          <p style={{ fontSize: '0.68rem', color: '#A89F92', marginBottom: 1 }}>{r.label}</p>
+          <p style={{ fontSize: '0.82rem', color: r.color ?? '#1E1A14', lineHeight: 1.5 }}>{r.value}</p>
+        </div>
+      ) : null)}
+    </div>
+  )
+}
+
+// 試合記録の詳細表示
+function GameDetail({ gr, lang }: { gr: GameRecord; lang: string }) {
+  const fgPct = gr.fgAttempts > 0 ? Math.round((gr.fgMade / gr.fgAttempts) * 100) : 0
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {/* スタッツ */}
+      <div>
+        <p style={{ fontSize: '0.68rem', color: '#A89F92', marginBottom: 4 }}>
+          {lang === 'ja' ? 'スタッツ' : 'Stats'}
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+          {[
+            { label: lang === 'ja' ? '得点' : 'PTS', value: gr.points },
+            { label: 'RB',  value: gr.rebounds },
+            { label: 'AS',  value: gr.assists },
+            { label: 'ST',  value: gr.steals },
+            { label: 'TO',  value: gr.turnovers },
+            { label: 'BL',  value: gr.blocks },
+            { label: 'FG',  value: gr.fgAttempts > 0 ? `${gr.fgMade}/${gr.fgAttempts}(${fgPct}%)` : '-' },
+            { label: lang === 'ja' ? '出場' : 'MIN', value: gr.minutesPlayed > 0 ? `${gr.minutesPlayed}min` : '-' },
+          ].map(s => (
+            <div key={s.label} style={{
+              background: 'rgba(195,175,148,0.15)',
+              borderRadius: 6, padding: '4px 6px', textAlign: 'center',
+            }}>
+              <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1E1A14' }}>{s.value}</p>
+              <p style={{ fontSize: '0.62rem', color: '#A89F92' }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 振り返り */}
+      {[
+        { label: lang === 'ja' ? 'できたプレー' : 'Good Plays', value: gr.goodPlays, color: '#2E7D52' },
+        { label: lang === 'ja' ? '改善したいプレー' : 'Bad Plays', value: gr.badPlays, color: '#DC3545' },
+        { label: lang === 'ja' ? 'チーム分析' : 'Team Analysis', value: gr.teamAnalysis },
+        { label: lang === 'ja' ? '次試合への課題' : 'Next Game Focus', value: gr.nextGameFocus, color: '#1E3A5F' },
+        { label: lang === 'ja' ? 'メンタル振り返り' : 'Mental Reflection', value: gr.mentalReflection },
+        { label: lang === 'ja' ? '自己評価' : 'Self Rating', value: `${'★'.repeat(gr.selfRating)}${'☆'.repeat(5 - gr.selfRating)} (${gr.selfRating}/5)` },
+      ].map(r => r.value ? (
+        <div key={r.label}>
+          <p style={{ fontSize: '0.68rem', color: '#A89F92', marginBottom: 1 }}>{r.label}</p>
+          <p style={{ fontSize: '0.82rem', color: r.color ?? '#1E1A14', lineHeight: 1.5 }}>{r.value}</p>
+        </div>
+      ) : null)}
+    </div>
+  )
+}
+
 type RecordTab = 'practice' | 'game'
 
 export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
   const { lang } = useLanguage()
   const { practiceLogs, gameRecords, loading, fetchAthleteRecords, updateCoachFeedback } = useCoachStore()
-  const [tab,     setTab]     = useState<RecordTab>('practice')
-  const [editId,  setEditId]  = useState<string | null>(null)
+  const [tab,       setTab]       = useState<RecordTab>('practice')
+  const [editId,    setEditId]    = useState<string | null>(null)
+  const [expandId,  setExpandId]  = useState<string | null>(null)
 
   useEffect(() => {
     fetchAthleteRecords(athleteUserId)
@@ -141,7 +228,7 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
           padding: '20px 20px 40px',
           width: '100%',
           maxWidth: 480,
-          maxHeight: '85dvh',
+          maxHeight: '90dvh',
           overflowY: 'auto',
         }}
         onClick={e => e.stopPropagation()}
@@ -160,7 +247,7 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
         {/* タブ */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           {(['practice', 'game'] as const).map(t => (
-            <button key={t} onClick={() => { setTab(t); setEditId(null) }} style={{
+            <button key={t} onClick={() => { setTab(t); setEditId(null); setExpandId(null) }} style={{
               flex: 1, padding: '7px', borderRadius: 10, border: 'none', cursor: 'pointer',
               fontWeight: 600, fontSize: '0.8rem',
               background: tab === t ? '#1E3A5F' : 'rgba(195,175,148,0.2)',
@@ -186,7 +273,8 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
               const pl = rec as PracticeLog
               const gr = rec as GameRecord
               const fb = rec.coachFeedback
-              const isEditing = editId === rec.id
+              const isEditing  = editId   === rec.id
+              const isExpanded = expandId === rec.id
 
               return (
                 <div key={rec.id} style={{
@@ -195,35 +283,97 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
                 }}>
                   {/* レコードヘッダー */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                    <div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: '0.75rem', color: '#A89F92', marginBottom: 2 }}>
                         {fmtDate(rec.date ?? rec.createdAt ?? '')}
                         {isPractice && ` · ${pl.duration}${lang === 'ja' ? '分' : 'min'}`}
                         {!isPractice && ` vs ${gr.opponent}`}
+                        {isPractice && pl.practiceType && (
+                          <span style={{
+                            marginLeft: 6, fontSize: '0.68rem', fontWeight: 700,
+                            color: pl.practiceType === 'team' ? '#1E3A5F' : '#E07B2A',
+                          }}>
+                            [{lang === 'ja' ? (pl.practiceType === 'team' ? 'チーム' : '個人') : pl.practiceType}]
+                          </span>
+                        )}
                       </p>
-                      <p style={{ fontSize: '0.88rem', fontWeight: 600, color: '#1E1A14' }}>
-                        {isPractice ? pl.todayGoal : (gr.result === 'win' ? '🏆' : gr.result === 'lose' ? '💔' : '🤝') + ` ${gr.myScore}–${gr.opponentScore}`}
-                      </p>
+                      {/* 練習: 目標 + 達成度 */}
+                      {isPractice && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <p style={{ fontSize: '0.88rem', fontWeight: 600, color: '#1E1A14', margin: 0 }}>
+                            {pl.todayGoal}
+                          </p>
+                          <span style={{
+                            fontSize: '0.75rem', fontWeight: 700,
+                            color: pl.goalAchievement === 'achieved' ? '#2E7D52' : pl.goalAchievement === 'partial' ? '#E07B2A' : '#DC3545',
+                          }}>
+                            {pl.goalAchievement === 'achieved' ? '○' : pl.goalAchievement === 'partial' ? '△' : '×'}
+                          </span>
+                        </div>
+                      )}
+                      {/* 試合: スコア */}
+                      {!isPractice && (
+                        <p style={{ fontSize: '0.88rem', fontWeight: 600, color: '#1E1A14', margin: 0 }}>
+                          {(gr.result === 'win' ? '🏆' : gr.result === 'lose' ? '💔' : '🤝')} {gr.myScore}–{gr.opponentScore}
+                          <span style={{
+                            marginLeft: 8, fontSize: '0.7rem', fontWeight: 700,
+                            color: gr.result === 'win' ? '#2E7D52' : gr.result === 'lose' ? '#DC3545' : '#7A6E5F',
+                          }}>
+                            {gr.result === 'win' ? (lang === 'ja' ? '勝' : 'W') : gr.result === 'lose' ? (lang === 'ja' ? '負' : 'L') : (lang === 'ja' ? '引' : 'D')}
+                          </span>
+                        </p>
+                      )}
                     </div>
-                    {!isEditing && (
-                      <button
-                        onClick={() => setEditId(rec.id)}
-                        style={{
-                          padding: '4px 10px', borderRadius: 8, border: 'none',
-                          background: fb ? 'rgba(30,58,95,0.08)' : '#E07B2A',
-                          color: fb ? '#1E3A5F' : 'white',
-                          fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0,
-                        }}
-                      >
-                        {fb
-                          ? (lang === 'ja' ? 'FB編集' : 'Edit FB')
-                          : (lang === 'ja' ? 'FB追加 +' : 'Add FB +')}
-                      </button>
-                    )}
+
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginLeft: 8 }}>
+                      {/* 詳細展開ボタン */}
+                      {!isEditing && (
+                        <button
+                          onClick={() => setExpandId(isExpanded ? null : rec.id)}
+                          style={{
+                            padding: '4px 8px', borderRadius: 8, border: 'none',
+                            background: isExpanded ? 'rgba(195,175,148,0.4)' : 'rgba(195,175,148,0.2)',
+                            color: '#7A6E5F',
+                            fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer',
+                          }}
+                        >
+                          {isExpanded ? (lang === 'ja' ? '閉じる' : 'Close') : (lang === 'ja' ? '詳細' : 'Detail')}
+                        </button>
+                      )}
+                      {/* FB追加/編集ボタン */}
+                      {!isEditing && (
+                        <button
+                          onClick={() => { setEditId(rec.id); setExpandId(null) }}
+                          style={{
+                            padding: '4px 10px', borderRadius: 8, border: 'none',
+                            background: fb ? 'rgba(30,58,95,0.08)' : '#E07B2A',
+                            color: fb ? '#1E3A5F' : 'white',
+                            fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer',
+                          }}
+                        >
+                          {fb
+                            ? (lang === 'ja' ? 'FB編集' : 'Edit FB')
+                            : (lang === 'ja' ? 'FB追加 +' : 'Add FB +')}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
+                  {/* 詳細展開 */}
+                  {isExpanded && !isEditing && (
+                    <div style={{
+                      borderTop: '1px solid rgba(195,175,148,0.35)',
+                      paddingTop: 10, marginTop: 4,
+                    }}>
+                      {isPractice
+                        ? <PracticeDetail pl={pl} lang={lang} />
+                        : <GameDetail gr={gr} lang={lang} />
+                      }
+                    </div>
+                  )}
+
                   {/* 既存FB表示 */}
-                  {fb && !isEditing && (
+                  {fb && !isEditing && !isExpanded && (
                     <div style={{
                       background: 'rgba(30,58,95,0.05)',
                       borderRadius: 8, padding: '8px 10px',
@@ -234,6 +384,22 @@ export function AthleteModal({ athleteUserId, athleteName, onClose }: Props) {
                       </p>
                       {fb.goodPoints && <p style={{ fontSize: '0.78rem', color: '#2E7D52', marginBottom: 2 }}>✓ {fb.goodPoints}</p>}
                       {fb.improvements && <p style={{ fontSize: '0.78rem', color: '#E07B2A', marginBottom: 2 }}>△ {fb.improvements}</p>}
+                      {fb.nextInstruction && <p style={{ fontSize: '0.78rem', color: '#1E3A5F' }}>→ {fb.nextInstruction}</p>}
+                    </div>
+                  )}
+
+                  {/* 詳細展開中のFB表示（折りたたみ付き） */}
+                  {fb && !isEditing && isExpanded && (
+                    <div style={{
+                      borderTop: '1px solid rgba(195,175,148,0.35)',
+                      marginTop: 10, paddingTop: 10,
+                    }}>
+                      <p style={{ fontSize: '0.72rem', color: '#A89F92', marginBottom: 6 }}>
+                        📝 {lang === 'ja' ? 'コーチFB' : 'Coach Feedback'}
+                        {fb.coachName ? ` (${fb.coachName})` : ''}
+                      </p>
+                      {fb.goodPoints && <p style={{ fontSize: '0.78rem', color: '#2E7D52', marginBottom: 4 }}>✓ {fb.goodPoints}</p>}
+                      {fb.improvements && <p style={{ fontSize: '0.78rem', color: '#E07B2A', marginBottom: 4 }}>△ {fb.improvements}</p>}
                       {fb.nextInstruction && <p style={{ fontSize: '0.78rem', color: '#1E3A5F' }}>→ {fb.nextInstruction}</p>}
                     </div>
                   )}

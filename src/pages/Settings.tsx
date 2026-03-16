@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getProfile, saveProfile } from '../lib/profile'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -6,6 +6,7 @@ import { TeamModal } from '../components/TeamModal'
 import type { TeamWithRole } from '../types'
 import type { useCoachRelationships } from '../hooks/useCoachRelationships'
 import type { useTeams } from '../hooks/useTeams'
+import { supabase } from '../lib/supabase'
 
 interface Props {
   onBack: () => void
@@ -21,6 +22,21 @@ export function SettingsPage({ onBack, coachRel, teams }: Props) {
   const [deleting, setDeleting] = useState(false)
   const [motto, setMotto] = useState(() => getProfile().motto)
   const [saved, setSaved] = useState(false)
+  const [displayName, setDisplayName] = useState('')
+  const [displayNameSaved, setDisplayNameSaved] = useState(false)
+
+  // Supabase から display_name を読み込む
+  useEffect(() => {
+    if (!user) return
+    supabase
+      .from('user_profiles')
+      .select('display_name')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.display_name) setDisplayName(data.display_name)
+      })
+  }, [user])
 
   // コーチ招待
   const [inviteUrl,  setInviteUrl]  = useState('')
@@ -40,6 +56,17 @@ export function SettingsPage({ onBack, coachRel, teams }: Props) {
     saveProfile({ motto })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  const handleSaveDisplayName = async () => {
+    if (!user) return
+    await supabase.from('user_profiles').upsert({
+      user_id: user.id,
+      display_name: displayName.trim(),
+      updated_at: new Date().toISOString(),
+    })
+    setDisplayNameSaved(true)
+    setTimeout(() => setDisplayNameSaved(false), 2000)
   }
 
   const handleInviteCoach = async () => {
@@ -400,6 +427,39 @@ export function SettingsPage({ onBack, coachRel, teams }: Props) {
             ))}
           </div>
         </div>
+
+        {/* 表示名 */}
+        {user && (
+          <div className="nb-card-plain">
+            <p className="text-xs font-bold mb-1" style={{ color: '#E07B2A' }}>
+              {lang === 'ja' ? '👤 あなたの名前（コーチに表示）' : '👤 Your Display Name'}
+            </p>
+            <p className="text-xs mb-3" style={{ color: '#A89F92' }}>
+              {lang === 'ja' ? 'コーチ画面に表示される名前です' : 'Shown to your coach on their dashboard'}
+            </p>
+            <input
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              placeholder={lang === 'ja' ? '例）田中 太郎' : 'e.g. John Smith'}
+              style={{
+                width: '100%', padding: '10px 12px', borderRadius: 10,
+                border: '1px solid rgba(195,175,148,0.4)',
+                background: 'rgba(195,175,148,0.08)', color: '#1E1A14',
+                fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
+                marginBottom: 10,
+              }}
+            />
+            <button
+              onClick={handleSaveDisplayName}
+              className="btn-primary"
+              style={displayNameSaved ? { background: 'linear-gradient(135deg, #2E7D52, #1F5C3A)' } : undefined}
+            >
+              {displayNameSaved
+                ? (lang === 'ja' ? '✓ 保存しました' : '✓ Saved!')
+                : (lang === 'ja' ? '名前を保存する' : 'Save Name')}
+            </button>
+          </div>
+        )}
 
         {/* アカウント */}
         {user && (
