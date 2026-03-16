@@ -93,7 +93,7 @@ export function Onboarding({ onComplete }: Props) {
               ? 'カレンダーの形式と言語が自動で設定されます。'
               : 'Sets your calendar format and language automatically.'}
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
             {COUNTRIES.map(c => (
               <button
                 key={c.code}

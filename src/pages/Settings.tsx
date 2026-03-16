@@ -414,7 +414,7 @@ export function SettingsPage({ onBack, coachRel, teams }: Props) {
           <p className="text-xs mb-3" style={{ color: '#A89F92' }}>
             {lang === 'ja' ? 'カレンダーの形式と言語が変わります' : 'Changes calendar format and language'}
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
             {COUNTRIES.map(c => (
               <button
                 key={c.code}
