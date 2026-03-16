@@ -236,116 +236,448 @@ interface Props {
   onSignIn: () => void
 }
 
-// ===== コーチビューのモックデータ =====
+// ===== コーチビュー（6ページ対応） =====
+type CoachPage = 'home' | 'calendar' | 'practice' | 'game' | 'goals' | 'formations'
+
 function CoachPreview({ lang, onSignUp }: { lang: string; onSignUp: () => void }) {
-  const athletes = lang === 'ja'
+  const [coachPage, setCoachPage] = useState<CoachPage>('home')
+
+  const ja = lang === 'ja'
+
+  // モックデータ
+  const athletes = ja
     ? [
-        { name: '田中 翼', sessions: 3, lastPractice: '昨日 · チーム練習 120分', goal: '3ポイントシュートのフォームを安定させる', pending: true },
-        { name: '鈴木 陸', sessions: 2, lastPractice: '2日前 · 自主練 90分', goal: '左手のボールハンドリングを改善する', pending: false },
-        { name: '山田 蒼', sessions: 1, lastPractice: '5日前 · チーム練習 150分', goal: 'チームのピック&ロールの連携を高める', pending: true },
+        { name: '田中 翼', color: '#E07B2A', sessions: 3, pending: true },
+        { name: '鈴木 陸', color: '#1E3A5F', sessions: 2, pending: false },
+        { name: '山田 蒼', color: '#2E7D32', sessions: 1, pending: true },
       ]
     : [
-        { name: 'T. Tanaka', sessions: 3, lastPractice: 'Yesterday · Team 120min', goal: 'Stabilize 3-point shooting form', pending: true },
-        { name: 'R. Suzuki', sessions: 2, lastPractice: '2 days ago · Solo 90min', goal: 'Improve left-hand ball handling', pending: false },
-        { name: 'A. Yamada', sessions: 1, lastPractice: '5 days ago · Team 150min', goal: 'Improve team pick-and-roll', pending: true },
+        { name: 'T. Tanaka', color: '#E07B2A', sessions: 3, pending: true },
+        { name: 'R. Suzuki', color: '#1E3A5F', sessions: 2, pending: false },
+        { name: 'A. Yamada', color: '#2E7D32', sessions: 1, pending: true },
       ]
 
-  return (
-    <div style={{ paddingBottom: 8 }}>
-      {/* コーチヘッダー */}
-      <div style={{
-        backgroundColor: '#1E3A5F', borderRadius: 16, padding: '16px 18px',
-        marginBottom: 16, color: 'white',
-      }}>
-        <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>
-          {lang === 'ja' ? 'コーチダッシュボード' : 'Coach Dashboard'}
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ fontWeight: 800, fontSize: '1.1rem', fontFamily: "'Klee One', cursive" }}>
-              {lang === 'ja' ? 'チームA' : 'Team A'}
+  const practices = ja
+    ? [
+        { athlete: '田中 翼', color: '#E07B2A', date: '3/15', type: 'チーム練習', duration: 120, goal: '3ポイントシュートのフォームを安定させる', rating: 4, pending: true },
+        { athlete: '鈴木 陸', color: '#1E3A5F', date: '3/14', type: '自主練',    duration: 90,  goal: '左手のボールハンドリングを改善する',   rating: 5, pending: false },
+        { athlete: '山田 蒼', color: '#2E7D32', date: '3/11', type: 'チーム練習', duration: 150, goal: 'ピック&ロールの連携を高める',            rating: 3, pending: true },
+        { athlete: '田中 翼', color: '#E07B2A', date: '3/10', type: '自主練',    duration: 60,  goal: 'フリースローの安定化',                   rating: 4, pending: false },
+      ]
+    : [
+        { athlete: 'T. Tanaka', color: '#E07B2A', date: '3/15', type: 'Team',  duration: 120, goal: 'Stabilize 3-point form',       rating: 4, pending: true },
+        { athlete: 'R. Suzuki', color: '#1E3A5F', date: '3/14', type: 'Solo',  duration: 90,  goal: 'Left-hand ball handling',      rating: 5, pending: false },
+        { athlete: 'A. Yamada', color: '#2E7D32', date: '3/11', type: 'Team',  duration: 150, goal: 'Pick-and-roll coordination',   rating: 3, pending: true },
+        { athlete: 'T. Tanaka', color: '#E07B2A', date: '3/10', type: 'Solo',  duration: 60,  goal: 'Consistent free throws',       rating: 4, pending: false },
+      ]
+
+  const games = ja
+    ? [
+        { athlete: '田中 翼', color: '#E07B2A', date: '3/10', opponent: '○○高校',    result: 'win',  pts: 18, ast: 4, reb: 7, rating: 4, pending: true },
+        { athlete: '鈴木 陸', color: '#1E3A5F', date: '3/3',  opponent: '△△クラブ', result: 'lose', pts: 12, ast: 3, reb: 5, rating: 3, pending: false },
+        { athlete: '山田 蒼', color: '#2E7D32', date: '2/25', opponent: '□□中学',   result: 'win',  pts: 8,  ast: 6, reb: 4, rating: 4, pending: true },
+      ]
+    : [
+        { athlete: 'T. Tanaka', color: '#E07B2A', date: '3/10', opponent: 'Riverside',  result: 'win',  pts: 18, ast: 4, reb: 7, rating: 4, pending: true },
+        { athlete: 'R. Suzuki', color: '#1E3A5F', date: '3/3',  opponent: 'Westside',   result: 'lose', pts: 12, ast: 3, reb: 5, rating: 3, pending: false },
+        { athlete: 'A. Yamada', color: '#2E7D32', date: '2/25', opponent: 'Northgate',  result: 'win',  pts: 8,  ast: 6, reb: 4, rating: 4, pending: true },
+      ]
+
+  const teamGoals = ja
+    ? [
+        { title: '全員3ポイント成功率30%以上',        progress: 55, deadline: '4月末' },
+        { title: 'チーム平均得点70点超え',             progress: 70, deadline: '3月末' },
+      ]
+    : [
+        { title: 'Team 3PT% above 30%',               progress: 55, deadline: 'End of April' },
+        { title: 'Team average score over 70pts',      progress: 70, deadline: 'End of March' },
+      ]
+
+  const formations = ja
+    ? [
+        { name: 'ピック&ロール Aパターン', category: 'オフェンス', updated: '3/14', players: 5 },
+        { name: '2-3ゾーンDF',             category: 'ディフェンス', updated: '3/10', players: 5 },
+        { name: 'ファストブレーク',        category: 'オフェンス', updated: '3/5',  players: 5 },
+      ]
+    : [
+        { name: 'Pick & Roll Pattern A', category: 'Offense',  updated: '3/14', players: 5 },
+        { name: '2-3 Zone Defense',      category: 'Defense',  updated: '3/10', players: 5 },
+        { name: 'Fast Break',            category: 'Offense',  updated: '3/5',  players: 5 },
+      ]
+
+  // カレンダーデータ（3月の活動日）
+  const today = new Date()
+  const calData: Record<number, { name: string; color: string }[]> = {
+    11: [athletes[0], athletes[2]], 12: [athletes[1]],
+    13: [athletes[0]], 14: [athletes[1], athletes[2]],
+    15: [athletes[0], athletes[1]], 16: [],
+  }
+
+  // ===== 共通スタイル =====
+  const card = (extra?: React.CSSProperties): React.CSSProperties => ({
+    backgroundColor: 'white', borderRadius: 14, padding: '14px 16px',
+    boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+    border: '1px solid rgba(195,175,148,0.3)',
+    ...extra,
+  })
+  const fbBadge = (pending: boolean) => pending ? (
+    <span style={{ fontSize: '0.63rem', fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+      backgroundColor: 'rgba(224,123,42,0.12)', color: '#E07B2A' }}>
+      {ja ? 'FB待ち' : 'Pending'}
+    </span>
+  ) : (
+    <span style={{ fontSize: '0.63rem', fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+      backgroundColor: 'rgba(46,125,50,0.1)', color: '#2E7D32' }}>
+      {ja ? '済み' : 'Done'}
+    </span>
+  )
+
+  // ===== 各ページ =====
+  const renderPage = () => {
+    switch (coachPage) {
+
+      // ─── ホーム ───
+      case 'home': return (
+        <div>
+          <div style={{ backgroundColor: '#1E3A5F', borderRadius: 16, padding: '16px 18px', marginBottom: 16, color: 'white' }}>
+            <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>
+              {ja ? 'コーチダッシュボード' : 'Coach Dashboard'}
             </p>
-            <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
-              👥 {lang === 'ja' ? `選手 ${athletes.length}名` : `${athletes.length} Athletes`}
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: 800, fontSize: '1.1rem', fontFamily: "'Klee One', cursive" }}>
+                  {ja ? 'チームA' : 'Team A'}
+                </p>
+                <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
+                  👥 {ja ? `選手 ${athletes.length}名` : `${athletes.length} Athletes`}
+                </p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)' }}>
+                  {ja ? 'FB待ち' : 'Awaiting FB'}
+                </p>
+                <p style={{ fontSize: '1.6rem', fontWeight: 800, color: '#E07B2A', lineHeight: 1.2 }}>
+                  {athletes.filter(a => a.pending).length}
+                </p>
+              </div>
+            </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)' }}>
-              {lang === 'ja' ? 'フィードバック待ち' : 'Awaiting Feedback'}
-            </p>
-            <p style={{ fontSize: '1.6rem', fontWeight: 800, color: '#E07B2A', lineHeight: 1.2 }}>
-              {athletes.filter(a => a.pending).length}
+          {/* 選手サマリー */}
+          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E3A5F', marginBottom: 10 }}>
+            {ja ? '📋 選手サマリー' : '📋 Athlete Summary'}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {athletes.map((a, i) => (
+              <div key={i} style={{ ...card(), display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={onSignUp}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: a.color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 800, color: a.color }}>
+                    {a.name[0]}
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1E1A14' }}>{a.name}</p>
+                    <p style={{ fontSize: '0.7rem', color: '#A89F92' }}>{ja ? `今週 ${a.sessions}回練習` : `${a.sessions} sessions this week`}</p>
+                  </div>
+                </div>
+                {fbBadge(a.pending)}
+              </div>
+            ))}
+          </div>
+          <div style={{ ...card({ backgroundColor: '#1E3A5F', marginTop: 16, cursor: 'pointer' }), textAlign: 'center' }} onClick={onSignUp}>
+            <p style={{ color: 'white', fontWeight: 700, fontSize: '0.88rem' }}>
+              {ja ? '🏆 コーチとして登録する →' : '🏆 Join as a Coach →'}
             </p>
           </div>
         </div>
-      </div>
+      )
 
-      {/* 選手一覧 */}
-      <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E3A5F', marginBottom: 10 }}>
-        {lang === 'ja' ? '📋 選手の記録' : '📋 Athlete Records'}
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-        {athletes.map((a, i) => (
-          <div key={i} style={{
-            backgroundColor: 'white', borderRadius: 14, padding: '14px 16px',
-            boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
-            border: a.pending ? '1px solid rgba(224,123,42,0.25)' : '1px solid rgba(195,175,148,0.3)',
-            cursor: 'pointer',
-          }} onClick={onSignUp}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-              <div>
-                <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#1E1A14' }}>{a.name}</span>
-                <span style={{
-                  marginLeft: 8, fontSize: '0.65rem', fontWeight: 600,
-                  padding: '2px 7px', borderRadius: 20,
-                  backgroundColor: '#1E3A5F18', color: '#1E3A5F',
-                }}>
-                  {lang === 'ja' ? `今週 ${a.sessions}回` : `${a.sessions}× this week`}
-                </span>
-              </div>
-              {a.pending && (
-                <span style={{
-                  fontSize: '0.63rem', fontWeight: 700,
-                  padding: '2px 8px', borderRadius: 20,
-                  backgroundColor: 'rgba(224,123,42,0.12)', color: '#E07B2A',
-                }}>
-                  {lang === 'ja' ? 'FB待ち' : 'Pending FB'}
-                </span>
-              )}
+      // ─── カレンダー ───
+      case 'calendar': return (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h2 style={{ fontWeight: 800, fontSize: '1rem', color: '#1E3A5F', fontFamily: "'Klee One', cursive" }}>
+              {ja ? '3月 2025' : 'March 2025'}
+            </h2>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {athletes.map((a, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: a.color }} />
+                  <span style={{ fontSize: '0.65rem', color: '#7A6E5F' }}>{a.name.split(' ')[0]}</span>
+                </div>
+              ))}
             </div>
-            <p style={{ fontSize: '0.72rem', color: '#7A6E5F', marginBottom: 6 }}>🕐 {a.lastPractice}</p>
-            <p style={{ fontSize: '0.75rem', color: '#5A5248', lineHeight: 1.4 }}>
-              🎯 {a.goal}
-            </p>
-            {a.pending && (
-              <div style={{
-                marginTop: 10, padding: '8px 12px', borderRadius: 10,
-                backgroundColor: '#F5F0E8',
-                border: '1px dashed rgba(224,123,42,0.3)',
-              }}>
-                <p style={{ fontSize: '0.7rem', color: '#A89F92' }}>
-                  💬 {lang === 'ja' ? 'コーチコメントを追加…' : 'Add coach feedback…'}
-                </p>
-              </div>
-            )}
           </div>
-        ))}
+          {/* 週グリッド */}
+          <div style={{ backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 8 }}>
+              {(ja ? ['日','月','火','水','木','金','土'] : ['Su','Mo','Tu','We','Th','Fr','Sa']).map(d => (
+                <div key={d} style={{ textAlign: 'center', fontSize: '0.62rem', color: '#A89F92', fontWeight: 600 }}>{d}</div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+              {/* 3月1日は土曜 → 6マス空ける */}
+              {Array.from({ length: 6 }, (_, i) => <div key={`e${i}`} />)}
+              {Array.from({ length: 31 }, (_, i) => {
+                const day = i + 1
+                const dots = calData[day] ?? []
+                const isToday = day === today.getDate() && today.getMonth() === 2
+                return (
+                  <div key={day} style={{ textAlign: 'center', padding: '4px 0' }}>
+                    <div style={{
+                      width: 26, height: 26, borderRadius: '50%', margin: '0 auto 2px',
+                      backgroundColor: isToday ? '#1E3A5F' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <span style={{ fontSize: '0.7rem', color: isToday ? 'white' : '#1E1A14', fontWeight: isToday ? 700 : 400 }}>{day}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 1, flexWrap: 'wrap', minHeight: 8 }}>
+                      {dots.map((a, j) => (
+                        <div key={j} style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: a.color }} />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          {/* 今日の活動 */}
+          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E3A5F', marginBottom: 8 }}>
+            {ja ? '📅 最近の活動' : '📅 Recent Activity'}
+          </p>
+          {practices.slice(0, 3).map((p, i) => (
+            <div key={i} style={{ ...card({ marginBottom: 8 }), display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={onSignUp}>
+              <div style={{ width: 4, alignSelf: 'stretch', borderRadius: 4, backgroundColor: p.color, flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#1E1A14' }}>{p.athlete}</span>
+                  <span style={{ fontSize: '0.7rem', color: '#A89F92' }}>{p.date}</span>
+                </div>
+                <p style={{ fontSize: '0.72rem', color: '#7A6E5F' }}>{p.type} · {p.duration}min</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+
+      // ─── 練習 ───
+      case 'practice': return (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h2 style={{ fontWeight: 800, fontSize: '1rem', color: '#1E3A5F', fontFamily: "'Klee One', cursive" }}>
+              {ja ? '📓 チームの練習記録' : '📓 Team Practice Records'}
+            </h2>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {practices.map((p, i) => (
+              <div key={i} style={{ ...card({ borderLeft: `4px solid ${p.color}`, cursor: 'pointer' }), }} onClick={onSignUp}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                  <div>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#1E1A14' }}>{p.athlete}</span>
+                    <span style={{ marginLeft: 8, fontSize: '0.7rem', color: '#A89F92' }}>{p.date} · {p.type} {p.duration}min</span>
+                  </div>
+                  {fbBadge(p.pending)}
+                </div>
+                <p style={{ fontSize: '0.78rem', color: '#5A5248', marginBottom: 8 }}>🎯 {p.goal}</p>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {Array.from({ length: 5 }, (_, j) => (
+                    <div key={j} style={{ width: 14, height: 14, borderRadius: '50%', backgroundColor: j < p.rating ? '#E07B2A' : '#E8E0D0' }} />
+                  ))}
+                </div>
+                {p.pending && (
+                  <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 10, backgroundColor: '#F5F0E8', border: '1px dashed rgba(224,123,42,0.3)' }}>
+                    <p style={{ fontSize: '0.7rem', color: '#A89F92' }}>💬 {ja ? 'フィードバックを追加…' : 'Add feedback…'}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+
+      // ─── 試合 ───
+      case 'game': return (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h2 style={{ fontWeight: 800, fontSize: '1rem', color: '#1E3A5F', fontFamily: "'Klee One', cursive" }}>
+              {ja ? '🏀 チームの試合記録' : '🏀 Team Game Records'}
+            </h2>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {games.map((g, i) => (
+              <div key={i} style={{ ...card({ borderLeft: `4px solid ${g.result === 'win' ? '#2E7D32' : '#DC3545'}`, cursor: 'pointer' }) }} onClick={onSignUp}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#1E1A14' }}>{g.athlete}</span>
+                    <span style={{ marginLeft: 8, fontSize: '0.7rem', color: '#A89F92' }}>{g.date} vs {g.opponent}</span>
+                  </div>
+                  {fbBadge(g.pending)}
+                </div>
+                <div style={{ display: 'flex', gap: 12, fontSize: '0.75rem', color: '#5A5248' }}>
+                  <span>🏆 {g.pts}pts</span>
+                  <span>🤝 {g.ast}ast</span>
+                  <span>💪 {g.reb}reb</span>
+                  <span style={{ marginLeft: 'auto', fontWeight: 700, color: g.result === 'win' ? '#2E7D32' : '#DC3545' }}>
+                    {ja ? (g.result === 'win' ? '勝利' : '敗北') : (g.result === 'win' ? 'WIN' : 'LOSE')}
+                  </span>
+                </div>
+                {g.pending && (
+                  <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 10, backgroundColor: '#F5F0E8', border: '1px dashed rgba(224,123,42,0.3)' }}>
+                    <p style={{ fontSize: '0.7rem', color: '#A89F92' }}>💬 {ja ? '試合へのフィードバックを追加…' : 'Add game feedback…'}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+
+      // ─── 目標 ───
+      case 'goals': return (
+        <div>
+          {/* チーム目標 */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <h2 style={{ fontWeight: 800, fontSize: '1rem', color: '#1E3A5F', fontFamily: "'Klee One', cursive" }}>
+              🎯 {ja ? 'チーム目標' : 'Team Goals'}
+            </h2>
+            <button onClick={onSignUp} style={{ backgroundColor: '#E07B2A', color: 'white', border: 'none', borderRadius: 10, padding: '5px 12px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
+              + {ja ? '追加' : 'Add'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+            {teamGoals.map((g, i) => (
+              <div key={i} style={{ ...card({ cursor: 'pointer' }) }} onClick={onSignUp}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <p style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1E1A14', flex: 1, marginRight: 8 }}>{g.title}</p>
+                  <span style={{ fontSize: '0.7rem', color: '#A89F92', flexShrink: 0 }}>📅 {g.deadline}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1, height: 6, backgroundColor: '#E8E0D0', borderRadius: 3 }}>
+                    <div style={{ width: `${g.progress}%`, height: '100%', backgroundColor: '#E07B2A', borderRadius: 3 }} />
+                  </div>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#E07B2A', flexShrink: 0 }}>{g.progress}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* 個人目標 */}
+          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E3A5F', marginBottom: 10 }}>
+            {ja ? '👤 個人目標（閲覧のみ）' : '👤 Individual Goals (read-only)'}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { athlete: athletes[0], title: ja ? '3ポイント成功率35%以上' : '3PT% above 35%', progress: 60 },
+              { athlete: athletes[1], title: ja ? '左手レイアップをゲームで使う' : 'Left-hand layup in game', progress: 100 },
+              { athlete: athletes[2], title: ja ? 'スタミナ強化・40分フル出場' : 'Stamina for full 40min', progress: 40 },
+            ].map((item, i) => (
+              <div key={i} style={{ ...card({ cursor: 'pointer' }) }} onClick={onSignUp}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: item.athlete.color, flexShrink: 0 }} />
+                  <span style={{ fontSize: '0.72rem', color: '#A89F92' }}>{item.athlete.name}</span>
+                  <span style={{ fontSize: '0.78rem', color: '#1E1A14', fontWeight: 600, flex: 1 }}>{item.title}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1, height: 5, backgroundColor: '#E8E0D0', borderRadius: 3 }}>
+                    <div style={{ width: `${item.progress}%`, height: '100%', backgroundColor: item.athlete.color, borderRadius: 3 }} />
+                  </div>
+                  <span style={{ fontSize: '0.68rem', color: '#A89F92' }}>{item.progress}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+
+      // ─── 作戦 ───
+      case 'formations': return (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h2 style={{ fontWeight: 800, fontSize: '1rem', color: '#1E3A5F', fontFamily: "'Klee One', cursive" }}>
+              📋 {ja ? 'チーム作戦' : 'Team Plays'}
+            </h2>
+            <button onClick={onSignUp} style={{ backgroundColor: '#1E3A5F', color: 'white', border: 'none', borderRadius: 10, padding: '5px 12px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
+              + {ja ? '作戦追加' : 'New Play'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {formations.map((f, i) => (
+              <div key={i} style={{ ...card({ cursor: 'pointer' }) }} onClick={onSignUp}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    {/* ミニコートアイコン */}
+                    <div style={{ width: 44, height: 28, borderRadius: 6, backgroundColor: '#1E3A5F', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: '0.75rem' }}>📋</span>
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1E1A14' }}>{f.name}</p>
+                      <p style={{ fontSize: '0.7rem', color: '#A89F92' }}>
+                        {f.category} · {ja ? `選手${f.players}名` : `${f.players} players`} · {ja ? `更新 ${f.updated}` : `Updated ${f.updated}`}
+                      </p>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: '#A89F92' }}>›</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 16, padding: '16px', backgroundColor: '#F5F0E8', borderRadius: 14, border: '1px dashed rgba(30,58,95,0.2)' }}>
+            <p style={{ fontSize: '0.78rem', color: '#5A5248', lineHeight: 1.6 }}>
+              {ja
+                ? '🔒 登録するとコーチが作戦を作成・管理でき、チームの選手全員に共有されます。'
+                : '🔒 Sign up to create and manage plays that are shared with all team members.'}
+            </p>
+            <button onClick={onSignUp} style={{ marginTop: 10, width: '100%', backgroundColor: '#1E3A5F', color: 'white', border: 'none', borderRadius: 10, padding: '10px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}>
+              {ja ? '登録して作戦を作る →' : 'Sign up to create plays →'}
+            </button>
+          </div>
+        </div>
+      )
+    }
+  }
+
+  // ===== コーチナビ =====
+  const COACH_NAV: { id: CoachPage; emoji: string; label: { ja: string; en: string } }[] = [
+    { id: 'home',       emoji: '🏠', label: { ja: 'ホーム',       en: 'Home'     } },
+    { id: 'calendar',   emoji: '📅', label: { ja: 'カレンダー',   en: 'Calendar' } },
+    { id: 'practice',   emoji: '📓', label: { ja: '練習',         en: 'Practice' } },
+    { id: 'game',       emoji: '🏀', label: { ja: '試合',         en: 'Game'     } },
+    { id: 'goals',      emoji: '🎯', label: { ja: '目標',         en: 'Goals'    } },
+    { id: 'formations', emoji: '📋', label: { ja: '作戦',         en: 'Plays'    } },
+  ]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100dvh - 88px)' }}>
+      {/* コンテンツ */}
+      <div key={coachPage} style={{ flex: 1, paddingBottom: 72 }} className="page-enter">
+        {renderPage()}
       </div>
 
-      {/* CTAカード */}
-      <div style={{
-        backgroundColor: '#1E3A5F', borderRadius: 16, padding: '20px',
-        textAlign: 'center', cursor: 'pointer',
-      }} onClick={onSignUp}>
-        <p style={{ color: 'white', fontWeight: 700, fontSize: '0.92rem', marginBottom: 6 }}>
-          {lang === 'ja' ? '🏆 コーチとして参加する' : '🏆 Join as a Coach'}
-        </p>
-        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', lineHeight: 1.6 }}>
-          {lang === 'ja'
-            ? 'チームを作成して選手を招待。\nフィードバックで成長をサポートしましょう。'
-            : 'Create a team and invite athletes.\nSupport their growth with direct feedback.'}
-        </p>
-      </div>
+      {/* コーチ専用ボトムナビ */}
+      <nav style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        backgroundColor: '#0F2340',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 -2px 16px rgba(0,0,0,0.3)',
+      }}>
+        <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex' }}>
+          {COACH_NAV.map(({ id, emoji, label }) => {
+            const active = coachPage === id
+            return (
+              <button key={id} onClick={() => setCoachPage(id)}
+                style={{
+                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  padding: '6px 0 4px', gap: 1, border: 'none', background: 'transparent',
+                  color: active ? '#E07B2A' : 'rgba(255,255,255,0.5)',
+                  cursor: 'pointer', position: 'relative',
+                }}>
+                {active && (
+                  <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 20, height: 2, borderRadius: '0 0 3px 3px', background: '#E07B2A' }} />
+                )}
+                <span style={{ fontSize: '1rem' }}>{emoji}</span>
+                <span style={{ fontSize: '0.52rem', fontWeight: active ? 700 : 400 }}>{label[lang as 'ja' | 'en'] ?? label.ja}</span>
+              </button>
+            )
+          })}
+        </div>
+      </nav>
     </div>
   )
 }

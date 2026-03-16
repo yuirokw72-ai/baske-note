@@ -111,6 +111,12 @@ function AppInner() {
     setInviteBusy(false)
   }
 
+  // コーチとして担当選手がいる場合 → スキルチェックは不要
+  const isCoach = coachRel.myAthletes.length > 0
+  const visibleNav = isCoach
+    ? NAV_IDS.filter(n => n.id !== 'skills')
+    : NAV_IDS
+
   const nav = (p: string) => setPage(p as Page)
 
   // ===== 認証ロード中 =====
@@ -186,6 +192,9 @@ function AppInner() {
       case 'settings':   return <SettingsPage   onBack={() => setPage('home')} coachRel={coachRel} teams={teams} />
     }
   }
+
+  // コーチなのにスキルページにいる場合はホームへ
+  if (isCoach && page === 'skills') setPage('home')
 
   const showNav = page !== 'settings'
 
@@ -351,7 +360,7 @@ function AppInner() {
           }}
         >
           <div className="max-w-md mx-auto flex">
-            {NAV_IDS.map(({ id, key, Icon }) => {
+            {visibleNav.map(({ id, key, Icon }) => {
               const active = page === id
               return (
                 <button
