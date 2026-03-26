@@ -46,6 +46,15 @@ function captureInviteTokens() {
 // mount直後に実行（OAuth redirect前も後も）
 captureInviteTokens()
 
+// テキストエリア自動リサイズ（nb-textareaクラス）
+document.addEventListener('input', (e) => {
+  const el = e.target as HTMLElement
+  if (el instanceof HTMLTextAreaElement && el.classList.contains('nb-textarea')) {
+    el.style.height = 'auto'
+    el.style.height = el.scrollHeight + 'px'
+  }
+})
+
 function AppInner() {
   const [page, setPage] = useState<Page>('home')
   const [onboardingDone, setOnboardingDone] = useState(() => getProfile().onboardingDone)
@@ -53,7 +62,7 @@ function AppInner() {
   const [featureTourDone, setFeatureTourDone] = useState(() => hasSeenFeatureTour())
   const { user, loading: authLoading, signInWithGoogle } = useAuth()
   const store = useSupabaseStore(user?.id ?? '')
-  const { lang, t } = useLanguage()
+  const { lang, setLang, t } = useLanguage()
 
   // コーチ・チームフック（ログイン済みのみ）
   const coachRel = useCoachRelationships(user?.id ?? null)
@@ -314,8 +323,15 @@ function AppInner() {
         </div>
       )}
 
-      {/* 設定アイコン */}
+      {/* 言語トグル + 設定アイコン */}
       <div className="fixed top-3 right-3 z-40 flex items-center gap-1.5">
+        <button
+          onClick={() => setLang(lang === 'ja' ? 'en' : 'ja')}
+          className="px-2.5 py-1 rounded-full text-xs font-bold"
+          style={{ backgroundColor: 'rgba(195,175,148,0.35)', color: '#7A6E5F', border: '1px solid rgba(195,175,148,0.6)' }}
+        >
+          {lang === 'ja' ? 'EN' : 'JA'}
+        </button>
         <button
           onClick={() => setPage(page === 'settings' ? 'home' : 'settings')}
           className="p-1.5 rounded-full"

@@ -17,9 +17,10 @@ function fmtDate(s: string) {
 // ===== MyMemory 翻訳 API (無料・APIキー不要) =====
 async function translateOne(text: string, to: string): Promise<string> {
   if (!text.trim()) return text
+  const from = to === 'ja' ? 'en' : 'ja'
   try {
     const res = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=auto|${to}`
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`
     )
     const json = await res.json()
     return (json.responseData?.translatedText as string) ?? text

@@ -7,7 +7,6 @@ import type { TeamWithRole } from '../types'
 import type { useCoachRelationships } from '../hooks/useCoachRelationships'
 import type { useTeams } from '../hooks/useTeams'
 import { supabase } from '../lib/supabase'
-import { COUNTRIES } from '../lib/locale'
 
 interface Props {
   onBack: () => void
@@ -16,7 +15,7 @@ interface Props {
 }
 
 export function SettingsPage({ onBack, coachRel, teams }: Props) {
-  const { lang, country, setCountry } = useLanguage()
+  const { lang, setLang } = useLanguage()
   const { user, signOut, deleteAccount } = useAuth()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
@@ -406,45 +405,22 @@ export function SettingsPage({ onBack, coachRel, teams }: Props) {
           </div>
         )}
 
-        {/* 国・地域設定 */}
+        {/* 言語設定 */}
         <div className="nb-card-plain">
-          <p className="text-xs font-bold mb-1" style={{ color: '#1E3A5F' }}>
-            {lang === 'ja' ? '🌏 国・地域 / Country' : '🌏 Country / Region'}
+          <p className="text-xs font-bold mb-3" style={{ color: '#1E3A5F' }}>
+            {lang === 'ja' ? '🌐 言語 / Language' : '🌐 Language'}
           </p>
-          <p className="text-xs mb-3" style={{ color: '#A89F92' }}>
-            {lang === 'ja' ? 'カレンダーの形式と言語が変わります' : 'Changes calendar format and language'}
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-            {COUNTRIES.map(c => (
-              <button
-                key={c.code}
-                onClick={() => setCountry(c.code)}
+          <div className="flex gap-2">
+            {(['ja', 'en'] as const).map(l => (
+              <button key={l} onClick={() => setLang(l)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
                 style={{
-                  padding: '10px 4px',
-                  borderRadius: '12px',
-                  border: country.code === c.code
-                    ? '2px solid #E07B2A'
-                    : '1px solid rgba(195,175,148,0.4)',
-                  background: country.code === c.code
-                    ? 'rgba(224,123,42,0.1)'
-                    : 'rgba(195,175,148,0.1)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '4px',
-                  cursor: 'pointer',
+                  backgroundColor: lang === l ? '#1E3A5F' : 'rgba(195,175,148,0.2)',
+                  color: lang === l ? 'white' : '#7A6E5F',
+                  border: lang === l ? 'none' : '1px solid rgba(195,175,148,0.4)',
                 }}
               >
-                <span style={{ fontSize: '1.3rem' }}>{c.flag}</span>
-                <span style={{
-                  fontSize: '0.62rem',
-                  color: country.code === c.code ? '#E07B2A' : '#7A6E5F',
-                  fontWeight: country.code === c.code ? 700 : 400,
-                  textAlign: 'center',
-                  lineHeight: 1.2,
-                }}>
-                  {lang === 'ja' ? c.nameJa : c.nameEn}
-                </span>
+                {l === 'ja' ? '🇯🇵 日本語' : '🇺🇸 English'}
               </button>
             ))}
           </div>

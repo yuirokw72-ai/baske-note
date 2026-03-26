@@ -34,7 +34,9 @@ function buildCalendar(year: number, month: number, weekStartsOn: 0 | 1) {
 }
 
 export function CalendarPage({ practiceLogs, gameRecords, onNavigate }: Props) {
-  const { locale, weekStartsOn, t } = useLanguage()
+  const { lang, t } = useLanguage()
+  const locale = lang === 'ja' ? 'ja-JP' : 'en-US'
+  const weekStartsOn: 0 | 1 = 0
   const today = new Date()
   const [year, setYear]   = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())

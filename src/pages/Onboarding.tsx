@@ -3,14 +3,13 @@ import { saveProfile } from '../lib/profile'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { COUNTRIES } from '../lib/locale'
 
 interface Props {
   onComplete: () => void
 }
 
 export function Onboarding({ onComplete }: Props) {
-  const { lang, country, setCountry } = useLanguage()
+  const { lang, setLang } = useLanguage()
   const { user } = useAuth()
   const [displayName, setDisplayName] = useState('')
   const [motto, setMotto] = useState('')
@@ -57,6 +56,20 @@ export function Onboarding({ onComplete }: Props) {
         pointerEvents: 'none',
       }} />
 
+      {/* JA/EN toggle */}
+      <button
+        onClick={() => setLang(lang === 'ja' ? 'en' : 'ja')}
+        style={{
+          position: 'absolute', top: 16, right: 16,
+          padding: '4px 12px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 700,
+          backgroundColor: 'rgba(255,255,255,0.12)',
+          color: 'rgba(255,255,255,0.7)',
+          border: '1px solid rgba(255,255,255,0.2)',
+        }}
+      >
+        {lang === 'ja' ? 'EN' : 'JA'}
+      </button>
+
       <div style={{ position: 'relative', width: '100%', maxWidth: 380, textAlign: 'center' }}>
         {/* logo */}
         <div style={{ fontSize: '3.5rem', marginBottom: '8px', lineHeight: 1 }}>🏀</div>
@@ -75,59 +88,6 @@ export function Onboarding({ onComplete }: Props) {
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', marginBottom: '36px', lineHeight: 1.6 }}>
           {lang === 'ja' ? '練習・試合・成長を記録するノート' : 'Track your practice, games & growth'}
         </p>
-
-        {/* Country selector card */}
-        <div style={{
-          backgroundColor: 'rgba(255,255,255,0.07)',
-          borderRadius: '16px',
-          padding: '24px 20px',
-          marginBottom: '16px',
-          border: '1px solid rgba(255,255,255,0.12)',
-          textAlign: 'left',
-        }}>
-          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', marginBottom: '4px', fontWeight: 600 }}>
-            {lang === 'ja' ? '🌏 あなたの国・地域' : '🌏 Your Country / Region'}
-          </p>
-          <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.75rem', marginBottom: '14px', lineHeight: 1.5 }}>
-            {lang === 'ja'
-              ? 'カレンダーの形式と言語が自動で設定されます。'
-              : 'Sets your calendar format and language automatically.'}
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-            {COUNTRIES.map(c => (
-              <button
-                key={c.code}
-                onClick={() => setCountry(c.code)}
-                style={{
-                  padding: '10px 4px',
-                  borderRadius: '12px',
-                  border: country.code === c.code
-                    ? '2px solid rgba(224,123,42,0.9)'
-                    : '1px solid rgba(255,255,255,0.12)',
-                  background: country.code === c.code
-                    ? 'rgba(224,123,42,0.18)'
-                    : 'rgba(255,255,255,0.05)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                <span style={{ fontSize: '1.4rem' }}>{c.flag}</span>
-                <span style={{
-                  fontSize: '0.65rem',
-                  color: country.code === c.code ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.5)',
-                  fontWeight: country.code === c.code ? 700 : 400,
-                  textAlign: 'center',
-                  lineHeight: 1.2,
-                }}>
-                  {lang === 'ja' ? c.nameJa : c.nameEn}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Display Name card */}
         <div style={{

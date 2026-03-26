@@ -12,8 +12,6 @@ export interface CountryConfig {
 
 export const COUNTRIES: CountryConfig[] = [
   { code: 'jp', flag: '🇯🇵', nameJa: '日本',             nameEn: 'Japan',           locale: 'ja-JP', lang: 'ja', weekStartsOn: 0 },
-  { code: 'kr', flag: '🇰🇷', nameJa: '韓国',             nameEn: 'South Korea',     locale: 'ko-KR', lang: 'ko', weekStartsOn: 0 },
-  { code: 'cn', flag: '🇨🇳', nameJa: '中国',             nameEn: 'China',           locale: 'zh-CN', lang: 'zh', weekStartsOn: 1 },
   { code: 'au', flag: '🇦🇺', nameJa: 'オーストラリア',   nameEn: 'Australia',       locale: 'en-AU', lang: 'en', weekStartsOn: 1 },
   { code: 'us', flag: '🇺🇸', nameJa: 'アメリカ',         nameEn: 'United States',   locale: 'en-US', lang: 'en', weekStartsOn: 0 },
   { code: 'gb', flag: '🇬🇧', nameJa: 'イギリス',         nameEn: 'United Kingdom',  locale: 'en-GB', lang: 'en', weekStartsOn: 1 },
@@ -28,7 +26,5 @@ export function getCountry(code: string): CountryConfig {
 // 後方互換: 旧 lang 設定 → country code に変換
 export function langToCountryCode(lang: string): string {
   if (lang === 'ja') return 'jp'
-  if (lang === 'ko') return 'kr'
-  if (lang === 'zh') return 'cn'
   return 'us'
 }

@@ -148,6 +148,8 @@ body {
   min-height: 80px;
   line-height: 1.75;
   transition: border-color 0.18s, box-shadow 0.18s;
+  field-sizing: content;
+  overflow: hidden;
 }
 .nb-textarea::placeholder { color: #C3AF94; }
 .nb-textarea:focus {
