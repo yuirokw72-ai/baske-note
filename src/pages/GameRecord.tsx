@@ -717,6 +717,7 @@ export function GameRecordPage({ records, onAdd, onUpdate, onDelete, teams }: Pr
           message={{ ja: '🏀 試合結果を記録しよう！', en: '🏀 Record your game result!' }}
           lang={lang}
           position="bottom"
+          align="right"
         >
           <button onClick={() => setView('form')}
             className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold"

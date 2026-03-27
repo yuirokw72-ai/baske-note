@@ -7,6 +7,7 @@ interface TooltipWrapperProps {
   message: { ja: string; en: string }
   lang: string
   position?: 'top' | 'bottom'
+  align?: 'center' | 'right' | 'left'
   fullWidth?: boolean
   delay?: number
   children: React.ReactNode
@@ -21,6 +22,7 @@ export function TooltipWrapper({
   message,
   lang,
   position = 'bottom',
+  align = 'center',
   fullWidth = false,
   delay = 600,
   children,
@@ -48,6 +50,20 @@ export function TooltipWrapper({
 
   const isTop = position === 'top'
 
+  const tooltipPos =
+    align === 'right'
+      ? { right: 0, left: 'auto' as const, transform: 'none' }
+      : align === 'left'
+      ? { left: 0, right: 'auto' as const, transform: 'none' }
+      : { left: '50%' as const, transform: 'translateX(-50%)' }
+
+  const arrowPos =
+    align === 'right'
+      ? { right: 16, left: 'auto' as const, transform: 'none' }
+      : align === 'left'
+      ? { left: 16, right: 'auto' as const, transform: 'none' }
+      : { left: '50%' as const, transform: 'translateX(-50%)' }
+
   return (
     <div style={{ position: 'relative', display: fullWidth ? 'block' : 'inline-block' }}>
       {children}
@@ -57,8 +73,7 @@ export function TooltipWrapper({
           style={{
             position: 'absolute',
             [isTop ? 'bottom' : 'top']: 'calc(100% + 10px)',
-            left: '50%',
-            transform: 'translateX(-50%)',
+            ...tooltipPos,
             backgroundColor: '#1E3A5F',
             color: 'white',
             borderRadius: 10,
@@ -78,8 +93,7 @@ export function TooltipWrapper({
           {/* 矢印 */}
           <div style={{
             position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
+            ...arrowPos,
             width: 0,
             height: 0,
             borderStyle: 'solid',

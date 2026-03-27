@@ -211,6 +211,7 @@ export function GoalsPage({ goals, onAdd, onUpdate, onDelete }: Props) {
           message={{ ja: '🎯 目標を設定してみよう！', en: '🎯 Set your first goal!' }}
           lang={lang}
           position="bottom"
+          align="right"
         >
           <button onClick={() => setShowForm(true)}
             className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold"

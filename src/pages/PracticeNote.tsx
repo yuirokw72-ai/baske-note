@@ -934,6 +934,7 @@ export function PracticeNote({ logs, latestNextChallenge, onAdd, onUpdate, onDel
           message={{ ja: '📓 タップして練習を記録！', en: '📓 Tap to log a practice!' }}
           lang={lang}
           position="bottom"
+          align="right"
         >
           <button onClick={() => setView('form')}
             className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold"
@@ -964,7 +965,7 @@ export function PracticeNote({ logs, latestNextChallenge, onAdd, onUpdate, onDel
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0 mr-2">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <p className="text-xs" style={{ color: '#A89F92' }}>
+                      <p className="text-xs" style={{ color: '#A89F92', whiteSpace: 'nowrap' }}>
                         {fmtDate(log.date, lang)} · {log.duration}{t('pn.minUnit')}
                       </p>
                       {log.practiceType && (
